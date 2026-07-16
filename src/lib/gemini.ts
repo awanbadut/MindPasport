@@ -8,10 +8,18 @@ const MODEL_NAME = "gemini-2.0-flash";
 function getApiKeyPool(): string[] {
   const poolStr = process.env.GEMINI_API_KEY_POOL;
   if (poolStr) {
-    return poolStr.split(",").map((k) => k.trim()).filter(Boolean);
+    // Hapus tanda kutip pembuka & penutup jika ada di seluruh string
+    const cleanPool = poolStr.replace(/^["']|["']$/g, "");
+    return cleanPool
+      .split(",")
+      .map((k) => k.trim().replace(/^["']|["']$/g, ""))
+      .filter(Boolean);
   }
   const singleKey = process.env.GEMINI_API_KEY;
-  return singleKey ? [singleKey.trim()] : [];
+  if (singleKey) {
+    return [singleKey.trim().replace(/^["']|["']$/g, "")];
+  }
+  return [];
 }
 
 // Memory pointer untuk algoritma Round Robin
