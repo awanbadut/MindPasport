@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Model Gemini yang digunakan — pakai flash terbaru
-const MODEL_NAME = "gemini-2.0-flash";
+// Model Gemini yang digunakan — pakai flash terbaru yang memiliki kuota aktif
+const MODEL_NAME = "gemini-2.5-flash";
 
 // ==================== API Key Pool ====================
 
