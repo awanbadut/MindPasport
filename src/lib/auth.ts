@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
@@ -8,9 +7,12 @@ import type { Role } from "@prisma/client";
 
 // auth.ts hanya dijalankan di Node.js runtime (API Routes, Server Components)
 // BUKAN di middleware (Edge Runtime)
+// CATATAN: PrismaAdapter DIHAPUS karena kita pakai JWT strategy (bukan database sessions).
+// PrismaAdapter hanya dibutuhkan untuk OAuth providers atau database sessions,
+// yang keduanya tidak kita gunakan. Tanpa adapter, login Credentials + JWT bekerja sempurna.
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  // adapter: PrismaAdapter(prisma), // <-- DIHAPUS: menyebabkan error karena tabel Account/Session tidak ada di DB
   providers: [
     Credentials({
       name: "credentials",
