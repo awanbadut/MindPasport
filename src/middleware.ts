@@ -1,50 +1,53 @@
-import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { authConfig } from "@/lib/auth.config";
 
-const { auth } = NextAuth(authConfig);
+// Middleware ringan untuk proteksi route — TANPA NextAuth/Prisma/bcrypt
+// agar 100% kompatibel dengan Edge Runtime Vercel.
+// Cukup cek keberadaan session cookie JWT yang diset oleh NextAuth.
 
-// Middleware menggunakan auth.config yang TIDAK mengimpor Prisma/bcrypt
-// agar kompatibel dengan Edge Runtime Vercel
-export default auth((req: NextRequest & { auth: { user?: { id?: string; role?: string } } | null }) => {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const session = req.auth;
 
-  // Route publik yang tidak butuh login
-  const publicRoutes = ["/login", "/register", "/api/auth", "/api/passport/public/"];
-  const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r));
+  // ===== Route yang SELALU bisa diakses tanpa login =====
+  const alwaysPublic = [
+    "/",            // Landing page
+    "/login",
+    "/register",
+    "/api/auth",    // NextAuth internal endpoints
+    "/api/passport/public/", // Public passport sharing
+  ];
+  const isAlwaysPublic = alwaysPublic.some((r) => pathname === r || pathname.startsWith(r));
 
-  // Passport publik juga tidak butuh login
+  // Passport publik (slug sharing) tidak butuh login
   const isPublicPassport =
     pathname.startsWith("/passport/") && !pathname.startsWith("/passport/qrcode");
 
-  if (isPublicRoute || isPublicPassport) {
+  if (isAlwaysPublic || isPublicPassport) {
     return NextResponse.next();
   }
 
-  // Jika belum login, redirect ke /login
-  if (!session?.user) {
+  // ===== Cek session cookie NextAuth (JWT strategy) =====
+  // NextAuth menyimpan JWT di salah satu dari dua nama cookie berikut:
+  // - next-auth.session-token (development/HTTP)
+  // - __Secure-next-auth.session-token (production/HTTPS)
+  const sessionToken =
+    req.cookies.get("next-auth.session-token")?.value ??
+    req.cookies.get("__Secure-next-auth.session-token")?.value;
+
+  if (!sessionToken) {
+    // Belum login — redirect ke halaman login
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Proteksi admin routes
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, error: { code: "FORBIDDEN", message: "Akses ditolak" } },
-        { status: 403 }
-      );
-    }
-  }
-
+  // Sudah login — lanjutkan ke route yang diminta
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
+    // Jalankan middleware untuk semua route KECUALI asset statis Next.js
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
