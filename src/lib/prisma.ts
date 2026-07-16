@@ -1,7 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-// Singleton Prisma Client untuk Next.js (Prisma 7 dengan adapter)
+// Singleton Prisma Client untuk Next.js (Prisma 7 dengan adapter pg)
 // Mencegah multiple instances di development mode dengan HMR
 
 declare global {
@@ -9,20 +10,17 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-function createPrismaClient() {
-  // Prisma 7 menggunakan adapter untuk koneksi database
-  // DATABASE_URL dipakai untuk runtime (bisa pooler/pgbouncer)
+function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
-    // ASUMSI: Saat development tanpa .env, buat client tanpa adapter untuk type checking
-    // Ini hanya untuk tipe - akan error saat runtime tanpa DATABASE_URL
-    return new PrismaClient({
-      log: ["error"],
-    });
+    throw new Error("DATABASE_URL tidak terkonfigurasi di environment variables.");
   }
 
-  const adapter = new PrismaPg({ connectionString });
+  // Prisma 7 adapter-pg: gunakan pg.Pool, bukan object connectionString langsung
+  const pool = new pg.Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
