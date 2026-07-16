@@ -235,6 +235,26 @@ export function Navbar({
                     {item.label}
                   </Link>
                 ))}
+                
+                {userRole === "Administrator" && (
+                  <>
+                    <div className="border-t border-slate-100 my-1" />
+                    {[
+                      { label: 'Verifikasi Progres', href: '/admin/verify', icon: '📥' },
+                      { label: 'Atur Standar Industri', href: '/admin/standards', icon: '⚙️' },
+                    ].map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-amber-700 hover:bg-amber-50 transition-colors font-medium"
+                      >
+                        <span>{item.icon}</span>
+                        {item.label}
+                      </Link>
+                    ))}
+                  </>
+                )}
               </div>
 
               <div className="border-t border-slate-100 py-1">

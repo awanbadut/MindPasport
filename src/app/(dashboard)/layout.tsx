@@ -22,7 +22,7 @@ export default async function DashboardLayout({
       {/* Sidebar - Desktop only (hidden on mobile via CSS inside Sidebar component) */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-64">
-          <Sidebar />
+          <Sidebar userRole={session.user.role} />
         </div>
       </div>
 
