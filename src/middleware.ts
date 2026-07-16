@@ -1,35 +1,36 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Proxy (sebelumnya "middleware") — Next.js 16 menggunakan nama file proxy.ts
-// dan nama fungsi export "proxy".
-// Ringan dan 100% Edge-compatible — tidak mengimpor NextAuth/Prisma/bcrypt.
+// Middleware Next.js 15 — ringan, 100% Edge-compatible
+// Tidak mengimpor NextAuth/Prisma/bcrypt sama sekali.
+// Cukup cek session cookie JWT yang diset oleh NextAuth.
 
-export function proxy(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ===== Route yang SELALU bisa diakses tanpa login =====
-  const alwaysPublic = [
-    "/",
+  // Route yang selalu bisa diakses tanpa login
+  const publicPrefixes = [
     "/login",
     "/register",
     "/api/auth",
     "/api/passport/public/",
   ];
-  const isAlwaysPublic = alwaysPublic.some(
-    (r) => pathname === r || pathname.startsWith(r)
-  );
+  const isPublicPrefix = publicPrefixes.some((r) => pathname.startsWith(r));
+
+  // Landing page
+  const isLandingPage = pathname === "/";
 
   // Passport publik (slug sharing) tidak butuh login
   const isPublicPassport =
     pathname.startsWith("/passport/") &&
     !pathname.startsWith("/passport/qrcode");
 
-  if (isAlwaysPublic || isPublicPassport) {
+  if (isLandingPage || isPublicPrefix || isPublicPassport) {
     return NextResponse.next();
   }
 
-  // ===== Cek session cookie NextAuth (JWT strategy) =====
+  // Cek session cookie NextAuth (JWT strategy)
+  // NextAuth menyimpan JWT di salah satu dari dua cookie ini:
   const sessionToken =
     req.cookies.get("next-auth.session-token")?.value ??
     req.cookies.get("__Secure-next-auth.session-token")?.value;
@@ -45,6 +46,7 @@ export function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
+    // Jalankan untuk semua route kecuali asset statis Next.js
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
