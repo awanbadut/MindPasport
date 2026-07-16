@@ -70,23 +70,6 @@ export async function POST(request: Request) {
 
     const { answers } = parseResult.data;
 
-    // Cek apakah sudah ada Career DNA (untuk POST harus belum ada)
-    const existing = await prisma.careerDNA.findUnique({
-      where: { userId: session.user.id },
-    });
-    if (existing) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "ALREADY_EXISTS",
-            message: "Career DNA sudah ada. Gunakan PUT untuk update.",
-          },
-        },
-        { status: 400 }
-      );
-    }
-
     return await processCareerDna(session.user.id, answers as RawAnswer[]);
   } catch (err) {
     console.error("[POST /api/career-dna] Error:", err);
