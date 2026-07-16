@@ -53,7 +53,7 @@ export default function AiNavigatorPage() {
       const json = await res.json();
       if (json.success) {
         setLatestLog(json.data);
-        setSuccessMsg("Rekomendasi baru berhasil di-generate dari Gemini AI!");
+        setSuccessMsg("Rekomendasi baru berhasil di-generate!");
         // Refresh logs list
         fetchData();
       } else {
@@ -100,9 +100,9 @@ export default function AiNavigatorPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">AI Career Navigator</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">Career Navigator</h1>
           <p className="text-neutral-500 text-sm mt-1">
-            Asisten otonom Gemini AI yang menganalisis profil lengkap Anda untuk merekomendasikan langkah karier berikutnya.
+            Analisis profil lengkap Anda secara otonom untuk merekomendasikan langkah karier berikutnya.
           </p>
         </div>
         <button
@@ -131,7 +131,7 @@ export default function AiNavigatorPage() {
           <div className="animate-spin w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
           <h3 className="font-bold text-neutral-800">Menyusun Rekomendasi...</h3>
           <p className="text-xs text-neutral-400 max-w-xs mx-auto">
-            Gemini sedang membaca profil Career DNA, progress roadmap, dan portofolio Anda untuk memformulasikan saran terbaik.
+            Sistem sedang membaca profil Career DNA, progress roadmap, dan portofolio Anda untuk memformulasikan saran terbaik.
           </p>
         </div>
       )}
@@ -174,7 +174,7 @@ export default function AiNavigatorPage() {
       {/* History log panel */}
       {logs.length > 1 && !generating && (
         <div className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm space-y-4">
-          <h3 className="text-base font-bold text-neutral-800">Riwayat Konsultasi AI</h3>
+          <h3 className="text-base font-bold text-neutral-800">Riwayat Konsultasi & Saran</h3>
           <div className="space-y-3">
             {logs.slice(1).map((log, idx) => (
               <div
@@ -204,16 +204,16 @@ export default function AiNavigatorPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
             </svg>
           </div>
-          <h3 className="font-bold text-neutral-800 text-base mb-2">Belum ada Rekomendasi AI</h3>
+          <h3 className="font-bold text-neutral-800 text-base mb-2">Belum ada Rekomendasi</h3>
           <p className="text-neutral-500 text-sm mb-5 leading-relaxed">
-            Anda belum pernah meminta konsultasi dengan AI Career Navigator. Klik tombol di bawah untuk memulai.
+            Anda belum pernah meminta konsultasi dengan Career Navigator. Klik tombol di bawah untuk memulai.
           </p>
           <button
             onClick={handleGenerate}
             disabled={generating}
             className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors shadow-md shadow-indigo-500/20"
           >
-            Mulai Konsultasi AI
+            Mulai Konsultasi & Cari Saran
           </button>
         </div>
       )}

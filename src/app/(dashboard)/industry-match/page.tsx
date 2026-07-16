@@ -171,7 +171,7 @@ export default function IndustryMatchPage() {
                 {/* AI Narrative paragraph */}
                 {selectedResult.narrative && (
                   <div className="bg-sky-50 border border-sky-100 text-sky-900 rounded-2xl p-5 text-sm leading-relaxed space-y-1">
-                    <span className="text-[10px] font-bold text-sky-500 uppercase tracking-widest block mb-1">Insight Gemini AI</span>
+                    <span className="text-[10px] font-bold text-sky-500 uppercase tracking-widest block mb-1">Rekomendasi & Analisis Sistem</span>
                     <p className="font-medium text-xs sm:text-sm">{selectedResult.narrative}</p>
                   </div>
                 )}

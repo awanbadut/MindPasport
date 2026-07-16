@@ -127,7 +127,7 @@ export default function RoadmapPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
         <p className="text-neutral-500 text-sm font-medium">
-          {generating ? "Menyusun roadmap personal dengan Gemini AI..." : "Memuat data roadmap..."}
+          {generating ? "Menyusun roadmap personal..." : "Memuat data roadmap..."}
         </p>
       </div>
     );

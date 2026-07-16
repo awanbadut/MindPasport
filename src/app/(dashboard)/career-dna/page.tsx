@@ -197,7 +197,7 @@ export default function CareerDnaPage() {
 
         {resultData.aiAvailable === false && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-800 text-sm">
-            ⚠️ Insight AI belum sepenuhnya tersedia saat ini karena batas limit panggilan API. Namun, skor Anda tetap berhasil dihitung.
+            ⚠️ Analisis detail belum sepenuhnya tersedia saat ini karena keterbatasan kuota sistem. Namun, skor Anda tetap berhasil dihitung.
           </div>
         )}
 

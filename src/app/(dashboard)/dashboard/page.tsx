@@ -303,7 +303,7 @@ export default async function DashboardPage() {
             </div>
           )}
 
-          {/* AI Navigator */}
+          {/* Career Navigator */}
           <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 bg-sky-50 rounded-lg flex items-center justify-center">
@@ -312,11 +312,10 @@ export default async function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-neutral-900">AI Career Navigator</h3>
-                <span className="text-xs bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded-full font-medium">Asisten AI</span>
+                <h3 className="text-sm font-semibold text-neutral-900">Career Navigator</h3>
               </div>
             </div>
-            <p className="text-xs text-neutral-500 mb-3">Dapatkan rekomendasi pelatihan & karier personal dari AI.</p>
+            <p className="text-xs text-neutral-500 mb-3">Dapatkan rekomendasi pelatihan & karier secara personal.</p>
             <Link href="/navigator"
               className="block w-full text-center bg-sky-50 hover:bg-sky-100 text-sky-700 py-2 rounded-lg text-sm font-medium transition-colors">
               Minta Rekomendasi →

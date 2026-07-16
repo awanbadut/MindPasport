@@ -18,7 +18,7 @@ const breadcrumbMap: Record<string, string> = {
   '/skill-gap':       'Skill Gap Analysis',
   '/roadmap':         'Learning Roadmap',
   '/industry-match':  'Industry Fit Match',
-  '/navigator':       'Career Navigator AI',
+  '/navigator':       'Career Navigator',
   '/progress':        'Learning Progress Tracker',
   '/readiness-score': 'Readiness Score',
   '/passport':        'Mind Passport',

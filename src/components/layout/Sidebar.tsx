@@ -76,7 +76,6 @@ const navItems: NavItem[] = [
         />
       </svg>
     ),
-    badge: 'AI',
   },
   {
     label: 'Learning Progress',
