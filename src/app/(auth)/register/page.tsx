@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { loginAction } from "@/lib/actions/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -46,11 +46,7 @@ export default function RegisterPage() {
       }
 
       // Auto-login setelah registrasi berhasil
-      const loginResult = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
+      const loginResult = await loginAction(formData.email, formData.password);
 
       if (loginResult?.error) {
         router.push("/login");

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { loginAction } from '@/lib/actions/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,14 +24,10 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
+      const result = await loginAction(email, password);
 
       if (result?.error) {
-        setError('Email atau kata sandi salah. Silakan periksa kembali.');
+        setError(result.error);
       } else {
         router.push('/dashboard');
         router.refresh();
