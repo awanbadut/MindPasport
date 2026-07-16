@@ -1,27 +1,25 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { authConfig } from "@/lib/auth.config";
 
-// Middleware untuk proteksi route sesuai 04-auth-dan-roles.md
-// Semua route di grup (dashboard) wajib login.
+const { auth } = NextAuth(authConfig);
 
+// Middleware menggunakan auth.config yang TIDAK mengimpor Prisma/bcrypt
+// agar kompatibel dengan Edge Runtime Vercel
 export default auth((req: NextRequest & { auth: { user?: { id?: string; role?: string } } | null }) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
   // Route publik yang tidak butuh login
-  const publicRoutes = ["/login", "/register", "/api/auth"];
-  const isPublicRoute = publicRoutes.some(r => pathname.startsWith(r));
+  const publicRoutes = ["/login", "/register", "/api/auth", "/api/passport/public/"];
+  const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r));
 
   // Passport publik juga tidak butuh login
-  const isPublicPassport = pathname.startsWith("/passport/") && !pathname.startsWith("/passport/qrcode");
+  const isPublicPassport =
+    pathname.startsWith("/passport/") && !pathname.startsWith("/passport/qrcode");
 
   if (isPublicRoute || isPublicPassport) {
-    return NextResponse.next();
-  }
-
-  // API publik: passport endpoint untuk sharing
-  if (pathname.startsWith("/api/passport/public/")) {
     return NextResponse.next();
   }
 
