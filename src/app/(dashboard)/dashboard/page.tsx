@@ -313,7 +313,7 @@ export default async function DashboardPage() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-neutral-900">AI Career Navigator</h3>
-                <span className="text-xs bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded-full font-medium">Powered by Gemini</span>
+                <span className="text-xs bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded-full font-medium">Asisten AI</span>
               </div>
             </div>
             <p className="text-xs text-neutral-500 mb-3">Dapatkan rekomendasi pelatihan & karier personal dari AI.</p>

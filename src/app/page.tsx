@@ -41,7 +41,7 @@ export default function Home() {
       <main className="relative max-w-7xl mx-auto w-full px-6 pt-16 pb-24 z-10 flex flex-col items-center">
         <div className="text-center space-y-6 max-w-4xl">
           <span className="inline-flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-400/20 text-indigo-300 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase">
-            ⚡ Powered by Gemini 2.0 AI
+            ⚡ AI Career Ecosystem
           </span>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight text-white max-w-3xl mx-auto">
