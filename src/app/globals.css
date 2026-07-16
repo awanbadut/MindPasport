@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #4F46E5;
+  --color-primary-dark: #3730A3;
+  --color-secondary: #0EA5E9;
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-danger: #DC2626;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Utility classes for consistent color mapping across features */
+.text-priority-sangat-prioritas { color: #DC2626; }
+.text-priority-prioritas { color: #F59E0B; }
+.text-priority-cukup-prioritas { color: #0EA5E9; }
+.text-priority-dipertahankan { color: #16A34A; }
+
+.bg-priority-sangat-prioritas { background-color: #FEF2F2; border-color: #DC2626; }
+.bg-priority-prioritas { background-color: #FFFBEB; border-color: #F59E0B; }
+.bg-priority-cukup-prioritas { background-color: #F0F9FF; border-color: #0EA5E9; }
+.bg-priority-dipertahankan { background-color: #F0FDF4; border-color: #16A34A; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F1F5F9; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* Smooth transitions */
+* { transition-property: color, background-color, border-color, box-shadow; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }

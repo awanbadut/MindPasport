@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Datasource dikonfigurasi di prisma.config.ts (Prisma 7)
+// URL koneksi diatur melalui environment variables di prisma.config.ts
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum Role {
+  USER
+  MENTOR   // Guru BK / Dosen / Career Center — fase 2
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(USER)
+  educationLevel String?  // "SMA/SMK" | "S1" | dst — teks bebas
+  institution   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  careerDNA         CareerDNA?
+  skillEntries      UserSkill[]
+  skillGapAnalyses  SkillGapAnalysis[]
+  roadmaps          SkillRoadmap[]
+  progressEntries   ProgressEntry[]
+  passport          CompetencyPassport?
+  readinessScores   ReadinessScoreHistory[]
+  navigatorLogs     AiNavigatorLog[]
+  industryMatches   IndustryMatchResult[]
+}
+
+// ---------- 1. Career DNA Assessment ----------
+
+model CareerDNA {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 5 dimensi, skor 0-100, lihat 06-fitur-career-dna-assessment.md
+  directionScore      Int
+  natureScore         Int
+  abilityScore        Int
+  careerFitScore      Int
+  growthPotentialScore Int
+
+  // jawaban mentah kuesioner, disimpan sebagai JSON supaya fleksibel
+  rawAnswers    Json
+
+  // hasil turunan
+  topTraits     Json      // array string, insight per dimensi (lihat spesifikasi fitur)
+  recommendedCareers Json // array {title, matchPercentage}
+
+  assessedAt    DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ---------- Master data skill & standar industri (dipakai lintas fitur) ----------
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  category    String   // "Hard Skill" | "Soft Skill" | "Tools & Technical Competencies"
+  createdAt   DateTime @default(now())
+
+  userSkills        UserSkill[]
+  industryStandards IndustryStandardSkill[]
+  roadmapItems      RoadmapItem[]
+}
+
+model CareerRole {
+  id          String   @id @default(cuid())
+  title       String   @unique   // e.g. "Data Analyst"
+  category    String?            // e.g. "Data & Analytics"
+  level       String?            // "Entry Level" | "Mid" | "Senior"
+  description String?
+
+  industryStandards IndustryStandardSkill[]
+  skillGapAnalyses  SkillGapAnalysis[]
+  industryMatches   IndustryMatchResult[]
+  roadmaps          SkillRoadmap[]
+}
+
+model IndustryStandardSkill {
+  id            String   @id @default(cuid())
+  careerRoleId  String
+  careerRole    CareerRole @relation(fields: [careerRoleId], references: [id], onDelete: Cascade)
+  skillId       String
+  skill         Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  weightPercent Int        // bobot skill ini dalam role tsb, total per role idealnya = 100
+  standardScore Int        // skor standar industri 0-100
+
+  @@unique([careerRoleId, skillId])
+}
+
+model UserSkill {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId     String
+  skill       Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  currentScore Int     // 0-100, hasil self-assessment / tes / asesmen AI
+  source      String   // "self-assessment" | "ai-assessment" | "certificate" | "project"
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, skillId])
+}
+
+// ---------- 2. Skill Gap Analysis ----------
+
+model SkillGapAnalysis {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerRoleId    String
+  careerRole      CareerRole @relation(fields: [careerRoleId], references: [id])
+
+  overallReadinessPercent Int   // skor kesesuaian keseluruhan terhadap role ini
+  totalGapPoints          Int   // total gap semua skill (bisa negatif/positif akumulatif, lihat formula di file 07)
+  gapDetails              Json  // array {skillId, skillName, weight, userScore, industryScore, gap, gapCategory, priority}
+
+  createdAt       DateTime @default(now())
+}
+
+// ---------- 3. Personalized Skill Roadmap ----------
+
+model SkillRoadmap {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerRoleId  String?
+  careerRole    CareerRole?   @relation(fields: [careerRoleId], references: [id])
+  title         String
+  status        String        @default("active") // "active" | "completed" | "archived"
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  items         RoadmapItem[]
+}
+
+model RoadmapItem {
+  id            String   @id @default(cuid())
+  roadmapId     String
+  roadmap       SkillRoadmap @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  skillId       String?
+  skill         Skill?   @relation(fields: [skillId], references: [id])
+  stageNumber   Int      // urutan tahap (1, 2, 3, ...)
+  title         String
+  description   String
+  recommendedActivity String
+  priority      String   // "Sangat Prioritas" | "Prioritas" | "Cukup Prioritas" | "Dipertahankan"
+  status        String   @default("todo") // "todo" | "in-progress" | "done"
+  targetDate    DateTime?
+  completedAt   DateTime?
+}
+
+// ---------- 4. Skill Progress Tracker ----------
+
+model ProgressEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String   // "training" | "organization" | "internship" | "project" | "competition" | "volunteer" | "certificate"
+  title         String
+  organizer     String?
+  description   String?
+  startDate     DateTime?
+  endDate       DateTime?
+  certificateUrl String?
+  verified      Boolean  @default(false)
+  relatedSkillIds Json?  // array of Skill.id yang terdampak aktivitas ini
+  createdAt     DateTime @default(now())
+}
+
+// ---------- 5. Digital Competency Passport ----------
+
+model CompetencyPassport {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passportNumber  String   @unique  // format: MP-YYYY-MM-XXXXXX
+  publicSlug      String   @unique  // untuk URL publik & QR code
+  isPublic        Boolean  @default(false)
+  issuedAt        DateTime @default(now())
+  lastUpdatedAt   DateTime @updatedAt
+}
+
+// ---------- 6. Career Readiness Score ----------
+
+model ReadinessScoreHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  hardSkillScore        Int   // HS, 0-100
+  softSkillScore        Int   // SS, 0-100
+  practicalExperienceScore Int // PP, 0-100
+  leadershipScore       Int   // K, 0-100
+  adaptabilityScore     Int   // A, 0-100
+  consistencyScore      Int  // KP, 0-100
+
+  finalScore    Float    // hasil formula CSR, lihat 11-fitur-career-readiness-score.md
+  category      String   // "Belum Siap" | "Berkembang" | "Cukup Siap" | "Sangat Siap"
+
+  calculatedAt  DateTime @default(now())
+}
+
+// ---------- 7. AI Career Navigator ----------
+
+model AiNavigatorLog {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt        String   // ringkasan konteks yang dikirim ke Gemini (bukan raw prompt penuh kalau terlalu besar)
+  recommendations Json   // array {type: "training"|"internship"|"project"|"career-path", title, reason, url?}
+  createdAt     DateTime @default(now())
+}
+
+// ---------- 8. Industry Match Recommendation ----------
+
+model IndustryMatchResult {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerRoleId  String
+  careerRole    CareerRole @relation(fields: [careerRoleId], references: [id])
+  matchPercent  Int
+  matchingSkills   Json  // array skill yang cocok
+  missingSkills    Json  // array skill yang belum ada
+  createdAt     DateTime @default(now())
+}
