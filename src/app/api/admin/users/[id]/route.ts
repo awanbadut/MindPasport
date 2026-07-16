@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { Role } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
-// PATCH /api/admin/users/[id] — Ubah role pengguna (admin only)
+// PATCH /api/admin/users/[id] — Ubah detail & password pengguna (admin only)
 // DELETE /api/admin/users/[id] — Hapus pengguna (admin only)
 
 export async function PATCH(
@@ -26,33 +27,71 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    const body = await request.json();
+    const { role, name, email, educationLevel, institution, password } = body;
 
     // Proteksi: tidak bisa mengubah role diri sendiri
-    if (id === session.user.id) {
+    if (role && id === session.user.id && role !== session.user.role) {
       return NextResponse.json(
         { success: false, error: { code: "BAD_REQUEST", message: "Anda tidak bisa mengubah role Anda sendiri" } },
         { status: 400 }
       );
     }
 
-    const body = await request.json();
-    const { role } = body;
+    // Bangun payload update dinamis
+    const updateData: any = {};
 
-    if (!role || !Object.values(Role).includes(role)) {
-      return NextResponse.json(
-        { success: false, error: { code: "BAD_REQUEST", message: "Role tidak valid" } },
-        { status: 400 }
-      );
+    if (role) {
+      if (!Object.values(Role).includes(role)) {
+        return NextResponse.json(
+          { success: false, error: { code: "BAD_REQUEST", message: "Role tidak valid" } },
+          { status: 400 }
+        );
+      }
+      updateData.role = role as Role;
+    }
+
+    if (name !== undefined) updateData.name = name;
+    if (educationLevel !== undefined) updateData.educationLevel = educationLevel;
+    if (institution !== undefined) updateData.institution = institution;
+
+    if (email !== undefined) {
+      // Cek duplikasi email jika diubah
+      const existing = await prisma.user.findFirst({
+        where: {
+          email,
+          NOT: { id },
+        },
+      });
+      if (existing) {
+        return NextResponse.json(
+          { success: false, error: { code: "EMAIL_EXISTS", message: "Email sudah terdaftar pada pengguna lain" } },
+          { status: 400 }
+        );
+      }
+      updateData.email = email;
+    }
+
+    if (password) {
+      if (password.length < 6) {
+        return NextResponse.json(
+          { success: false, error: { code: "BAD_REQUEST", message: "Password minimal harus 6 karakter" } },
+          { status: 400 }
+        );
+      }
+      updateData.passwordHash = await bcrypt.hash(password, 10);
     }
 
     const updatedUser = await prisma.user.update({
       where: { id },
-      data: { role: role as Role },
+      data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        educationLevel: true,
+        institution: true,
       },
     });
 

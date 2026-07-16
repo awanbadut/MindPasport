@@ -23,6 +23,16 @@ export default function AdminUsersPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  // Edit Modal State
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<"USER" | "ADMIN" | "MENTOR">("USER");
+  const [editEduLevel, setEditEduLevel] = useState("");
+  const [editInstitution, setEditInstitution] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
   const fetchUsers = async () => {
     try {
       const res = await fetch("/api/admin/users");
@@ -43,31 +53,54 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, []);
 
-  const handleChangeRole = async (id: string, newRole: string) => {
+  const handleOpenEdit = (user: User) => {
+    setEditingUser(user);
+    setEditName(user.name);
+    setEditEmail(user.email);
+    setEditRole(user.role);
+    setEditEduLevel(user.educationLevel || "");
+    setEditInstitution(user.institution || "");
+    setEditPassword(""); // Kosongkan password baru secara default
     setError("");
     setSuccess("");
-    setProcessingId(id);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    setSavingEdit(true);
+    setError("");
+    setSuccess("");
 
     try {
-      const res = await fetch(`/api/admin/users/${id}`, {
+      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({
+          name: editName,
+          email: editEmail,
+          role: editRole,
+          educationLevel: editEduLevel || null,
+          institution: editInstitution || null,
+          password: editPassword || undefined,
+        }),
       });
 
       const json = await res.json();
       if (json.success) {
-        setSuccess(`Role pengguna ${json.data.name} berhasil diubah menjadi ${newRole}.`);
+        setSuccess(`Profil pengguna ${json.data.name} berhasil diperbarui.`);
         setUsers(prev =>
-          prev.map(u => (u.id === id ? { ...u, role: newRole as any } : u))
+          prev.map(u => (u.id === editingUser.id ? { ...u, ...json.data } : u))
         );
+        setEditingUser(null);
       } else {
-        setError(json.error.message || "Gagal mengubah role pengguna.");
+        setError(json.error.message || "Gagal memperbarui pengguna.");
       }
     } catch {
       setError("Kesalahan koneksi.");
     } finally {
-      setProcessingId(null);
+      setSavingEdit(false);
     }
   };
 
@@ -130,7 +163,7 @@ export default function AdminUsersPage() {
       <div>
         <h1 className="text-2xl font-bold text-neutral-900">Kelola Pengguna Sistem</h1>
         <p className="text-neutral-500 text-sm mt-1">
-          Kelola hak akses pengguna, ganti peran (User, Mentor, Admin), serta hapus akun pengguna yang tidak aktif.
+          Ubah nama, email, password, tingkat pendidikan, institusi, serta kelola peran (Role) seluruh pengguna platform.
         </p>
       </div>
 
@@ -221,21 +254,18 @@ export default function AdminUsersPage() {
                       })}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-3">
+                      <div className="flex items-center justify-end gap-4">
                         {processingId === user.id ? (
                           <div className="w-4 h-4 animate-spin border-2 border-indigo-500 border-t-transparent rounded-full" />
                         ) : (
                           <>
-                            {/* Role changer dropdown */}
-                            <select
-                              value={user.role}
-                              onChange={e => handleChangeRole(user.id, e.target.value)}
-                              className="bg-neutral-50 border border-neutral-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 font-semibold text-neutral-700"
+                            {/* Edit Button */}
+                            <button
+                              onClick={() => handleOpenEdit(user)}
+                              className="text-indigo-600 hover:text-indigo-800 text-xs font-semibold p-1"
                             >
-                              <option value="USER">User (Pelajar)</option>
-                              <option value="MENTOR">Mentor</option>
-                              <option value="ADMIN">Admin</option>
-                            </select>
+                              Edit / Ubah Password
+                            </button>
 
                             {/* Delete User */}
                             <button
@@ -263,6 +293,127 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-neutral-100 overflow-y-auto max-h-[90vh]">
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-100">
+              <h3 className="font-bold text-neutral-900 text-lg">Edit Profil Pengguna</h3>
+              <button
+                onClick={() => setEditingUser(null)}
+                className="text-neutral-400 hover:text-neutral-600 text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-neutral-500 uppercase mb-1.5">
+                  Nama Lengkap
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-neutral-500 uppercase mb-1.5">
+                  Alamat Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={editEmail}
+                  onChange={e => setEditEmail(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase mb-1.5">
+                    Peran (Role)
+                  </label>
+                  <select
+                    value={editRole}
+                    onChange={e => setEditRole(e.target.value as any)}
+                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  >
+                    <option value="USER">User (Pelajar)</option>
+                    <option value="MENTOR">Mentor</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase mb-1.5">
+                    Pendidikan
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: SMK, S1, SMA"
+                    value={editEduLevel}
+                    onChange={e => setEditEduLevel(e.target.value)}
+                    className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-neutral-500 uppercase mb-1.5">
+                  Institusi / Sekolah / Kampus
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nama sekolah atau perguruan tinggi"
+                  value={editInstitution}
+                  onChange={e => setEditInstitution(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100">
+                <label className="block text-xs font-semibold text-amber-600 uppercase mb-1.5">
+                  Reset Password (Opsional)
+                </label>
+                <input
+                  type="password"
+                  placeholder="Kosongkan jika tidak ingin mengubah password"
+                  value={editPassword}
+                  onChange={e => setEditPassword(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+                <span className="text-[10px] text-neutral-400 block mt-1">
+                  Minimal 6 karakter. Bila diisi, password lama pengguna akan terhapus dan digantikan password baru ini.
+                </span>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="px-4 py-2.5 border border-neutral-200 text-neutral-600 font-semibold rounded-xl text-sm hover:bg-neutral-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm"
+                >
+                  {savingEdit ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       {confirmDeleteId && (
