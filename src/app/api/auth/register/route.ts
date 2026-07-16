@@ -25,7 +25,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, password, educationLevel, institution } = parseResult.data;
+    const { name, password, educationLevel, institution } = parseResult.data;
+    // Normalisasi email ke lowercase agar konsisten saat login
+    const email = parseResult.data.email.toLowerCase().trim();
 
     // Cek apakah email sudah ada
     const existingUser = await prisma.user.findUnique({
