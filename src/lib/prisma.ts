@@ -1,9 +1,10 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
 
-// Singleton Prisma Client untuk Next.js (Prisma 7 dengan adapter pg)
-// Mencegah multiple instances di development mode dengan HMR
+// Singleton Prisma Client untuk Next.js dengan Neon Serverless Adapter
+// Menggunakan @neondatabase/serverless (HTTP/WebSocket) bukan pg native
+// 100% kompatibel dengan Vercel serverless functions
 
 declare global {
   // eslint-disable-next-line no-var
@@ -12,15 +13,14 @@ declare global {
 
 function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
-
   if (!connectionString) {
     throw new Error("DATABASE_URL tidak terkonfigurasi di environment variables.");
   }
 
-  // Prisma 7 adapter-pg: gunakan pg.Pool, bukan object connectionString langsung
-  const pool = new pg.Pool({ connectionString });
-  const adapter = new PrismaPg(pool);
+  // Aktifkan connection cache untuk performa yang lebih baik di serverless
+  neonConfig.fetchConnectionCache = true;
 
+  const adapter = new PrismaNeon({ connectionString });
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],

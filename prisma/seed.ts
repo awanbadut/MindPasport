@@ -1,18 +1,15 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not defined in environment variables");
-}
-
-const pool = new pg.Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+neonConfig.fetchConnectionCache = true;
+const connectionString = process.env.DATABASE_URL ?? "";
+const adapter = new PrismaNeon({ connectionString });
 const prisma = new PrismaClient({ adapter });
+
 
 async function main() {
   console.log("🌱 Mulai seeding database...");
@@ -353,5 +350,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-    await pool.end();
   });

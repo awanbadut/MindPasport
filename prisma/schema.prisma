@@ -2,12 +2,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Datasource dikonfigurasi di prisma.config.ts (Prisma 7)
-// URL koneksi diatur melalui environment variables di prisma.config.ts
+// Prisma 7: URL dikonfigurasi di prisma.config.ts via adapter
 datasource db {
   provider = "postgresql"
 }
-
 
 enum Role {
   USER
