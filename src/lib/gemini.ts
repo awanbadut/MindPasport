@@ -1,81 +1,155 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Wrapper terpusat untuk semua panggilan Gemini API.
-// Semua fitur AI WAJIB memanggil fungsi ini, JANGAN panggil SDK langsung dari route/komponen.
-// Ikuti 5 prinsip anti-halusinasi di 14-integrasi-gemini-api.md.
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-// Menggunakan gemini-1.5-flash sebagai model stabil.
-// Cek dokumentasi resmi Gemini API untuk nama model terbaru jika diperlukan update.
+// Model stabil Gemini API
 const MODEL_NAME = "gemini-1.5-flash";
+
+// Inisialisasi API key pool dari environment variables
+function getApiKeyPool(): string[] {
+  const poolStr = process.env.GEMINI_API_KEY_POOL;
+  if (poolStr) {
+    // Bersihkan spasi dan pisahkan berdasarkan koma
+    return poolStr.split(",").map((k) => k.trim()).filter(Boolean);
+  }
+  // Fallback ke key tunggal jika pool kosong
+  const singleKey = process.env.GEMINI_API_KEY;
+  return singleKey ? [singleKey.trim()] : [];
+}
+
+// Memory pointer untuk algoritma Round Robin (bertahan selama server instance warm/aktif)
+let currentKeyIndex = 0;
+
+/**
+ * Mendapatkan client GoogleGenerativeAI berikutnya berdasarkan urutan Round Robin.
+ * Mengembalikan client beserta index key yang digunakan untuk keperluan logging.
+ */
+function getNextGenAiClient(): { client: GoogleGenerativeAI; index: number } {
+  const keys = getApiKeyPool();
+  if (keys.length === 0) {
+    throw new Error("GEMINI_API_KEY atau GEMINI_API_KEY_POOL tidak terkonfigurasi di environment variables.");
+  }
+
+  // Ambil key sesuai index saat ini
+  const index = currentKeyIndex;
+  const selectedKey = keys[index];
+
+  // Geser index ke key berikutnya (Round Robin rotation)
+  currentKeyIndex = (currentKeyIndex + 1) % keys.length;
+
+  console.log(`[Gemini Pool] Round Robin: Menggunakan Key Index #${index} dari total ${keys.length} key.`);
+  return {
+    client: new GoogleGenerativeAI(selectedKey),
+    index,
+  };
+}
 
 /**
  * Memanggil Gemini API dan mengharapkan respons JSON terstruktur.
- * Menggunakan responseMimeType: "application/json" untuk memastikan output selalu JSON valid.
- * Retry maksimal 1x kalau JSON tidak valid (sesuai prinsip #5 anti-halusinasi).
+ * Menggunakan mode responseMimeType: "application/json".
+ * Dilengkapi dengan rotasi key otomatis (Round Robin) jika terjadi error Quota/Rate Limit (429).
  */
 export async function generateJsonResponse<T>(params: {
   systemInstruction: string;
   userPrompt: string;
 }): Promise<{ success: true; data: T } | { success: false; error: string }> {
-  const callGemini = async (extraInstruction?: string) => {
-    const model = genAI.getGenerativeModel({
-      model: MODEL_NAME,
-      systemInstruction: extraInstruction
-        ? `${params.systemInstruction}\n\n${extraInstruction}`
-        : params.systemInstruction,
-      generationConfig: {
-        responseMimeType: "application/json",
-      },
-    });
+  const keysCount = getApiKeyPool().length;
+  // Coba rotasi key sebanyak jumlah key yang tersedia di pool
+  const maxRetries = Math.max(2, keysCount);
 
-    const result = await model.generateContent(params.userPrompt);
-    const text = result.response.text();
-    return JSON.parse(text) as T;
-  };
-
-  try {
-    const data = await callGemini();
-    console.log("[Gemini] Request sukses");
-    return { success: true, data };
-  } catch (firstErr) {
-    console.warn("[Gemini] Percobaan pertama gagal, mencoba retry:", firstErr);
-    // Retry 1x dengan instruksi lebih ketat (prinsip #5)
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let keyIndexUsed = -1;
     try {
-      const data = await callGemini(
-        "PENTING: Kembalikan HANYA JSON valid sesuai skema yang diminta, tanpa teks tambahan apapun di luar JSON."
+      const { client, index } = getNextGenAiClient();
+      keyIndexUsed = index;
+
+      const model = client.getGenerativeModel({
+        model: MODEL_NAME,
+        systemInstruction: params.systemInstruction,
+        generationConfig: {
+          responseMimeType: "application/json",
+        },
+      });
+
+      const result = await model.generateContent(params.userPrompt);
+      const text = result.response.text();
+      const parsedData = JSON.parse(text) as T;
+
+      console.log(`[Gemini Pool] Request JSON sukses menggunakan Key Index #${keyIndexUsed} pada percobaan ke-${attempt}.`);
+      return { success: true, data: parsedData };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[Gemini Pool] Gagal pada percobaan ke-${attempt} (Key Index #${keyIndexUsed}):`,
+        errorMsg
       );
-      console.log("[Gemini] Retry sukses");
-      return { success: true, data };
-    } catch (retryErr) {
-      const errorMsg = retryErr instanceof Error ? retryErr.message : "Unknown Gemini error";
-      console.error("[Gemini] Retry gagal:", retryErr);
-      return { success: false, error: errorMsg };
+
+      // Cek apakah error disebabkan rate limit atau quota habis (HTTP 429 atau kata kunci Quota/Limit)
+      const isRateLimit =
+        errorMsg.includes("429") ||
+        errorMsg.toLowerCase().includes("quota") ||
+        errorMsg.toLowerCase().includes("limit") ||
+        errorMsg.toLowerCase().includes("exhausted");
+
+      if (isRateLimit && attempt < maxRetries) {
+        console.warn("[Gemini Pool] Mendeteksi rate limit / quota habis. Memutar ke key berikutnya...");
+        // Loop berlanjut ke percobaan berikutnya dengan key yang berbeda
+        continue;
+      }
+
+      // Jika bukan rate limit atau sudah mencapai batas maksimal percobaan, kembalikan error
+      return { success: false, error: `Gemini Error (Attempt ${attempt}): ${errorMsg}` };
     }
   }
+
+  return { success: false, error: "Seluruh API key di pool mengalami rate limit." };
 }
 
 /**
- * Helper untuk generate teks bebas (non-JSON) dari Gemini.
- * Dipakai untuk narasi singkat (misalnya Industry Match summary).
+ * Helper untuk generate teks bebas (non-JSON) dengan rotasi API Key Round Robin.
  */
 export async function generateTextResponse(params: {
   systemInstruction: string;
   userPrompt: string;
 }): Promise<{ success: true; data: string } | { success: false; error: string }> {
-  try {
-    const model = genAI.getGenerativeModel({
-      model: MODEL_NAME,
-      systemInstruction: params.systemInstruction,
-    });
+  const keysCount = getApiKeyPool().length;
+  const maxRetries = Math.max(2, keysCount);
 
-    const result = await model.generateContent(params.userPrompt);
-    const text = result.response.text();
-    return { success: true, data: text };
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : "Unknown Gemini error";
-    console.error("[Gemini] generateTextResponse error:", err);
-    return { success: false, error: errorMsg };
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let keyIndexUsed = -1;
+    try {
+      const { client, index } = getNextGenAiClient();
+      keyIndexUsed = index;
+
+      const model = client.getGenerativeModel({
+        model: MODEL_NAME,
+        systemInstruction: params.systemInstruction,
+      });
+
+      const result = await model.generateContent(params.userPrompt);
+      const text = result.response.text();
+
+      console.log(`[Gemini Pool] Request Teks sukses menggunakan Key Index #${keyIndexUsed} pada percobaan ke-${attempt}.`);
+      return { success: true, data: text };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[Gemini Pool] Gagal pada percobaan ke-${attempt} (Key Index #${keyIndexUsed}):`,
+        errorMsg
+      );
+
+      const isRateLimit =
+        errorMsg.includes("429") ||
+        errorMsg.toLowerCase().includes("quota") ||
+        errorMsg.toLowerCase().includes("limit") ||
+        errorMsg.toLowerCase().includes("exhausted");
+
+      if (isRateLimit && attempt < maxRetries) {
+        console.warn("[Gemini Pool] Mendeteksi rate limit / quota habis. Memutar ke key berikutnya...");
+        continue;
+      }
+
+      return { success: false, error: `Gemini Error (Attempt ${attempt}): ${errorMsg}` };
+    }
   }
+
+  return { success: false, error: "Seluruh API key di pool mengalami rate limit." };
 }
