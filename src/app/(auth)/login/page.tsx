@@ -33,13 +33,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError('Email atau kata sandi salah. Silakan periksa kembali.');
       } else {
-        // Cek apakah user sudah punya CareerDNA
-        const res = await fetch('/api/career-dna');
-        if (res.status === 404) {
-          router.push('/career-dna');
-        } else {
-          router.push('/dashboard');
-        }
+        router.push('/dashboard');
         router.refresh();
       }
     } catch {
