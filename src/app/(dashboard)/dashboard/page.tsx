@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReadinessCategory } from "@/types";
 
@@ -30,6 +31,10 @@ function getReadinessDot(category: string) {
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) return null;
+
+  if (session.user.role === "ADMIN") {
+    redirect("/admin/verify");
+  }
 
   const userId = session.user.id;
 

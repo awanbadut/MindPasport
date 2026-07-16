@@ -143,52 +143,51 @@ export function Sidebar({ onClose, userRole }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        <p className="px-3 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider">
-          Menu Utama
-        </p>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={[
-                'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium',
-                'transition-all duration-150 group',
-                isActive
-                  ? 'bg-[#4F46E5] text-white sidebar-item-active shadow-sm'
-                  : 'text-indigo-200 hover:bg-[#312E81] hover:text-white',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <span
-                className={[
-                  'flex-shrink-0 transition-transform duration-150',
-                  isActive ? 'text-white' : 'text-indigo-400 group-hover:text-white group-hover:scale-110',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                {item.icon}
-              </span>
-              <span className="flex-1 min-w-0 truncate">{item.label}</span>
-              {item.badge && (
-                <span className="flex-shrink-0 bg-amber-400 text-amber-900 text-xs font-bold px-1.5 py-0.5 rounded-md">
-                  {item.badge}
-                </span>
-              )}
-              {isActive && (
-                <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-white/60" />
-              )}
-            </Link>
-          );
-        })}
+        {userRole !== "ADMIN" && (
+          <>
+            <p className="px-3 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+              Menu Utama
+            </p>
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={[
+                    'relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium',
+                    'transition-all duration-150 group',
+                    isActive
+                      ? 'bg-[#4F46E5] text-white sidebar-item-active shadow-sm'
+                      : 'text-indigo-200 hover:bg-[#312E81] hover:text-white',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <span
+                    className={[
+                      'flex-shrink-0 transition-transform duration-150',
+                      isActive ? 'text-white' : 'text-indigo-400 group-hover:text-white group-hover:scale-110',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    {item.icon}
+                  </span>
+                  <span className="flex-1 min-w-0 truncate">{item.label}</span>
+                  {isActive && (
+                    <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-white/60" />
+                  )}
+                </Link>
+              );
+            })}
+          </>
+        )}
 
         {/* Menu Khusus Admin */}
         {userRole === "ADMIN" && (
-          <div className="pt-4 mt-4 border-t border-white/10 space-y-0.5">
+          <div className="space-y-0.5">
             <p className="px-3 py-2 text-xs font-semibold text-amber-400 uppercase tracking-wider">
               Menu Administrator
             </p>
@@ -244,19 +243,21 @@ export function Sidebar({ onClose, userRole }: SidebarProps) {
       </nav>
 
       {/* Bottom: readiness score preview */}
-      <div className="px-4 pb-4">
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <p className="text-xs text-indigo-300 font-medium mb-1">Readiness Score</p>
-          <div className="flex items-end gap-2 mb-2">
-            <span className="text-2xl font-bold text-white">72</span>
-            <span className="text-indigo-400 text-sm mb-0.5">/100</span>
+      {userRole !== "ADMIN" && (
+        <div className="px-4 pb-4">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <p className="text-xs text-indigo-300 font-medium mb-1">Readiness Score</p>
+            <div className="flex items-end gap-2 mb-2">
+              <span className="text-2xl font-bold text-white">72</span>
+              <span className="text-indigo-400 text-sm mb-0.5">/100</span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-1.5">
+              <div className="bg-gradient-to-r from-indigo-400 to-purple-400 h-1.5 rounded-full" style={{ width: '72%' }} />
+            </div>
+            <p className="text-xs text-indigo-400 mt-2">🎯 Siap untuk level berikutnya!</p>
           </div>
-          <div className="w-full bg-white/10 rounded-full h-1.5">
-            <div className="bg-gradient-to-r from-indigo-400 to-purple-400 h-1.5 rounded-full" style={{ width: '72%' }} />
-          </div>
-          <p className="text-xs text-indigo-400 mt-2">🎯 Siap untuk level berikutnya!</p>
         </div>
-      </div>
+      )}
     </aside>
   );
 }
