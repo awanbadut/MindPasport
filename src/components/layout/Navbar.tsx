@@ -21,7 +21,9 @@ const breadcrumbMap: Record<string, string> = {
   '/navigator':       'Career Navigator',
   '/progress':        'Learning Progress Tracker',
   '/readiness-score': 'Readiness Score',
-  '/passport':        'Mind Passport',
+  '/admin/verify':    'Verifikasi Progres',
+  '/admin/standards': 'Atur Standar Industri',
+  '/admin/users':     'Kelola Pengguna',
 };
 
 const notifications = [
@@ -242,6 +244,7 @@ export function Navbar({
                     {[
                       { label: 'Verifikasi Progres', href: '/admin/verify', icon: '📥' },
                       { label: 'Atur Standar Industri', href: '/admin/standards', icon: '⚙️' },
+                      { label: 'Kelola Pengguna', href: '/admin/users', icon: '👥' },
                     ].map((item) => (
                       <Link
                         key={item.href}
