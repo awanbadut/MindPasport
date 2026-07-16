@@ -4,6 +4,7 @@ import type { NextAuthConfig } from "next-auth";
 // File ini TIDAK BOLEH mengimpor database (Prisma) atau bcrypt karena dijalankan di Middleware Edge Vercel.
 
 export const authConfig = {
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
