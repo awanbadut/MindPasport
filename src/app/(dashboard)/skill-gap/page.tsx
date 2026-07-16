@@ -120,6 +120,8 @@ export default function SkillGapPage() {
             initialScores[std.skillId] = userSkillMap.get(std.skillId) ?? 0;
           });
           setUserScores(initialScores);
+        } else {
+          setError(jsonStd.error?.message || "Gagal memuat standar kompetensi.");
         }
       } catch (err) {
         setError("Gagal memuat standar skill untuk role ini.");

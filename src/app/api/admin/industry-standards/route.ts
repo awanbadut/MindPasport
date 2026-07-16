@@ -16,10 +16,10 @@ const industryStandardSchema = z.object({
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
+    if (!session?.user) {
       return NextResponse.json(
-        { success: false, error: { code: "FORBIDDEN", message: "Hanya admin" } },
-        { status: 403 }
+        { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } },
+        { status: 401 }
       );
     }
 

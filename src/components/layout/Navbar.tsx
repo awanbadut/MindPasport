@@ -13,14 +13,15 @@ interface NavbarProps {
 }
 
 const breadcrumbMap: Record<string, string> = {
-  '/dashboard':  'Dashboard',
-  '/career-dna': 'Career DNA Assessment',
-  '/skill-gap':  'Skill Gap Analysis',
-  '/roadmap':    'Learning Roadmap',
-  '/portfolio':  'Portofolio',
-  '/passport':   'Mind Passport',
-  '/mentor':     'Mentor AI',
-  '/profile':    'Profil Saya',
+  '/dashboard':       'Dashboard',
+  '/career-dna':      'Career DNA Assessment',
+  '/skill-gap':       'Skill Gap Analysis',
+  '/roadmap':         'Learning Roadmap',
+  '/industry-match':  'Industry Fit Match',
+  '/navigator':       'Career Navigator AI',
+  '/progress':        'Learning Progress Tracker',
+  '/readiness-score': 'Readiness Score',
+  '/passport':        'Mind Passport',
 };
 
 const notifications = [
@@ -221,8 +222,7 @@ export function Navbar({
               {/* Links */}
               <div className="py-1">
                 {[
-                  { label: 'Profil Saya', href: '/profile', icon: '👤' },
-                  { label: 'Pengaturan', href: '/settings', icon: '⚙️' },
+                  { label: 'Dashboard', href: '/dashboard', icon: '📊' },
                   { label: 'Mind Passport Saya', href: '/passport', icon: '🪪' },
                 ].map((item) => (
                   <Link
