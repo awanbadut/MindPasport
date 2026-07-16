@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Daftar model Gemini yang digunakan secara berurutan sebagai Fallback/Failover
-// Jika model pertama habis kuota, otomatis beralih ke model kedua, dan seterusnya.
+// Jika model pertama gagal (quota, 503, 404, dll), otomatis beralih ke model berikutnya.
 const FALLBACK_MODELS = [
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
@@ -45,18 +45,6 @@ function getNextClient(): { client: GoogleGenAI; index: number } {
   return { client: new GoogleGenAI({ apiKey: keys[index] }), index };
 }
 
-// ==================== Helpers ====================
-
-function isRateLimitError(msg: string): boolean {
-  return (
-    msg.includes("429") ||
-    msg.toLowerCase().includes("quota") ||
-    msg.toLowerCase().includes("exhausted") ||
-    msg.toLowerCase().includes("resource_exhausted") ||
-    msg.toLowerCase().includes("limit")
-  );
-}
-
 // ==================== Public API ====================
 
 /**
@@ -69,13 +57,12 @@ export async function generateJsonResponse<T>(params: {
   userPrompt: string;
 }): Promise<{ success: true; data: T } | { success: false; error: string }> {
   const keys = getApiKeyPool();
+  let lastError = "";
 
   // Iterasi melalui daftar model fallback
   for (const model of FALLBACK_MODELS) {
     console.log(`[Gemini Pool] Mencoba memproses JSON dengan model: ${model}`);
     const maxRetries = Math.max(2, keys.length);
-    let success = false;
-    let lastError = "";
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       let keyIndex = -1;
@@ -105,11 +92,7 @@ export async function generateJsonResponse<T>(params: {
         console.warn(
           `[Gemini Pool] Gagal dengan model ${model} pada percobaan ke-${attempt} (Key #${keyIndex}): ${msg}`
         );
-
-        if (isRateLimitError(msg) && attempt < maxRetries) {
-          console.warn("[Gemini Pool] Rate limit — memutar ke key berikutnya...");
-          continue;
-        }
+        // Lanjutkan loop ke key berikutnya di pool jika gagal
       }
     }
 
@@ -120,7 +103,7 @@ export async function generateJsonResponse<T>(params: {
 
   return {
     success: false,
-    error: "Seluruh model fallback (Gemini 2.5 Flash, Lite, 1.5 Flash) dan seluruh API key di pool mengalami rate limit/quota exhausted.",
+    error: `Seluruh model fallback dan API key di pool gagal. Error terakhir: ${lastError}`,
   };
 }
 
@@ -133,13 +116,12 @@ export async function generateTextResponse(params: {
   userPrompt: string;
 }): Promise<{ success: true; data: string } | { success: false; error: string }> {
   const keys = getApiKeyPool();
+  let lastError = "";
 
   // Iterasi melalui daftar model fallback
   for (const model of FALLBACK_MODELS) {
     console.log(`[Gemini Pool] Mencoba memproses TEKS dengan model: ${model}`);
     const maxRetries = Math.max(2, keys.length);
-    let success = false;
-    let lastError = "";
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       let keyIndex = -1;
@@ -166,11 +148,7 @@ export async function generateTextResponse(params: {
         console.warn(
           `[Gemini Pool] Gagal dengan model ${model} pada percobaan ke-${attempt} (Key #${keyIndex}): ${msg}`
         );
-
-        if (isRateLimitError(msg) && attempt < maxRetries) {
-          console.warn("[Gemini Pool] Rate limit — memutar ke key berikutnya...");
-          continue;
-        }
+        // Lanjutkan loop ke key berikutnya di pool jika gagal
       }
     }
 
@@ -181,6 +159,6 @@ export async function generateTextResponse(params: {
 
   return {
     success: false,
-    error: "Seluruh model fallback (Gemini 2.5 Flash, Lite, 1.5 Flash) dan seluruh API key di pool mengalami rate limit/quota exhausted.",
+    error: `Seluruh model fallback dan API key di pool gagal. Error terakhir: ${lastError}`,
   };
 }
