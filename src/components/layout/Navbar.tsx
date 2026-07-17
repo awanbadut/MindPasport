@@ -24,6 +24,7 @@ const breadcrumbMap: Record<string, string> = {
   '/admin/verify':    'Verifikasi Progres',
   '/admin/standards': 'Atur Standar Industri',
   '/admin/users':     'Kelola Pengguna',
+  '/admin/logs':      'Log Login',
 };
 
 const notifications = [
