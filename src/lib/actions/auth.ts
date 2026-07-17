@@ -5,9 +5,11 @@ import { encode } from "next-auth/jwt";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { loginRatelimit } from "@/lib/ratelimit";
+import { getMongoDb } from "@/lib/mongodb";
 
 // Login Server Action — bypass NextAuth CSRF sepenuhnya.
-// Verifikasi kredensial manual + JWT encode langsung + rate limiting via Upstash Redis.
+// Verifikasi kredensial manual + JWT encode langsung + rate limiting via Upstash Redis
+// + audit log ke MongoDB.
 
 export async function loginAction(
   email: string,
@@ -17,20 +19,25 @@ export async function loginAction(
     return { error: "Email dan kata sandi wajib diisi." };
   }
 
+  // Ambil IP untuk rate limiting & audit log
+  const headerStore = await headers();
+  const ip =
+    headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    headerStore.get("x-real-ip") ??
+    "anonymous";
+  const userAgent = headerStore.get("user-agent") ?? "unknown";
+
   // ── 1. Rate Limiting (jika Redis tersedia) ──────────────────────────────────
   if (loginRatelimit) {
-    const headerStore = await headers();
-    // Ambil IP dari header Vercel/proxy, fallback ke "anonymous"
-    const ip =
-      headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      headerStore.get("x-real-ip") ??
-      "anonymous";
-
     const { success, limit, remaining, reset } = await loginRatelimit.limit(ip);
 
     if (!success) {
       const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
       const retryMinutes = Math.ceil(retryAfterSeconds / 60);
+
+      // Log ke MongoDB
+      await writeLoginLog({ email, ip, userAgent, success: false, reason: "rate_limited" });
+
       return {
         error: `Terlalu banyak percobaan login. Coba lagi dalam ${retryMinutes} menit.`,
         rateLimited: true,
@@ -38,9 +45,7 @@ export async function loginAction(
       };
     }
 
-    console.log(
-      `[loginAction] IP: ${ip} | Remaining attempts: ${remaining}/${limit}`
-    );
+    console.log(`[loginAction] IP: ${ip} | Remaining: ${remaining}/${limit}`);
   }
 
   try {
@@ -51,19 +56,22 @@ export async function loginAction(
     });
 
     if (!user) {
+      await writeLoginLog({ email, ip, userAgent, success: false, reason: "user_not_found" });
       return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
     }
 
     // ── 3. Verifikasi password ─────────────────────────────────────────────────
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
+      await writeLoginLog({ email, ip, userAgent, success: false, reason: "wrong_password", userId: user.id });
       return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
     }
 
     // ── 4. Buat JWT token dengan format NextAuth v5 / Auth.js ─────────────────
     const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
     if (!secret) {
-      throw new Error("AUTH_SECRET tidak terkonfigurasi.");
+      console.error("[loginAction] AUTH_SECRET tidak ditemukan di environment!");
+      return { error: "Konfigurasi server bermasalah. Hubungi administrator." };
     }
 
     const isProduction = process.env.NODE_ENV === "production";
@@ -97,9 +105,37 @@ export async function loginAction(
       maxAge: 30 * 24 * 60 * 60,
     });
 
+    // ── 6. Catat login sukses ke MongoDB ──────────────────────────────────────
+    await writeLoginLog({ email: user.email, ip, userAgent, success: true, userId: user.id, role: user.role });
+
     return {};
   } catch (err) {
-    console.error("[loginAction] Error:", err);
-    return { error: "Terjadi kesalahan server. Silakan coba lagi." };
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[loginAction] EXCEPTION:", errMsg);
+    return { error: `Terjadi kesalahan: ${errMsg}` };
+  }
+}
+
+// ── Helper: Tulis log ke MongoDB (fire-and-forget, tidak block login) ─────────
+async function writeLoginLog(data: {
+  email: string;
+  ip: string;
+  userAgent: string;
+  success: boolean;
+  reason?: string;
+  userId?: string;
+  role?: string;
+}) {
+  try {
+    const db = await getMongoDb();
+    if (!db) return; // MongoDB tidak dikonfigurasi, skip
+
+    await db.collection("login_logs").insertOne({
+      ...data,
+      timestamp: new Date(),
+    });
+  } catch (mongoErr) {
+    // Jangan sampai MongoDB error membuat login gagal
+    console.warn("[MongoDB] Gagal tulis log:", mongoErr);
   }
 }
