@@ -4,37 +4,6 @@ import { cookies, headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
-// Buat JWT token yang kompatibel dengan NextAuth v5 / Auth.js
-// menggunakan jose (sudah jadi dependency next-auth) secara langsung
-// Format: JWE dir + A256CBC-HS512 dengan HKDF key derivation (sama persis dengan next-auth)
-async function createSessionToken(
-  payload: Record<string, unknown>,
-  secret: string,
-  salt: string
-): Promise<string> {
-  const { EncryptJWT } = await import("jose");
-  const { hkdfSync } = await import("crypto");
-
-  // Auth.js v5 key derivation: 64 bytes untuk A256CBC-HS512
-  // Info string harus sama persis dengan @auth/core
-  const derivedKey = hkdfSync(
-    "sha256",
-    Buffer.from(secret),
-    Buffer.from(salt),
-    `Auth.js Generated Encryption Key (${salt})`,
-    64 // A256CBC-HS512 = 512-bit = 64 bytes
-  );
-
-  const now = Math.floor(Date.now() / 1000);
-
-  return new EncryptJWT({ ...payload })
-    .setProtectedHeader({ alg: "dir", enc: "A256CBC-HS512" })
-    .setIssuedAt(now)
-    .setExpirationTime(now + 30 * 24 * 60 * 60)
-    .setJti(crypto.randomUUID())
-    .encrypt(new Uint8Array(derivedKey)); // Uint8Array, bukan CryptoKey
-}
-
 export async function loginAction(
   email: string,
   password: string
@@ -48,14 +17,13 @@ export async function loginAction(
 
   try {
     const headerStore = await headers();
-    ip =
-      headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      headerStore.get("x-real-ip") ??
-      "anonymous";
+    ip = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? headerStore.get("x-real-ip")
+      ?? "anonymous";
     userAgent = headerStore.get("user-agent") ?? "unknown";
   } catch { /* tidak kritis */ }
 
-  // ── 1. Rate Limiting (lazy, tidak crash jika Redis error) ────────────────────
+  // ── 1. Rate Limiting ─────────────────────────────────────────────────────────
   try {
     const { loginRatelimit } = await import("@/lib/ratelimit");
     if (loginRatelimit) {
@@ -70,46 +38,54 @@ export async function loginAction(
         };
       }
     }
-  } catch {
-    // Redis error → skip rate limiting, lanjutkan login
+  } catch { /* Redis error — skip, login tetap jalan */ }
+
+  // ── 2. Cari user ──────────────────────────────────────────────────────────────
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+    select: { id: true, name: true, email: true, role: true, passwordHash: true },
+  }).catch(() => null);
+
+  if (!user) {
+    void writeLog({ email, ip, userAgent, success: false, reason: "user_not_found" });
+    return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
   }
 
-  // ── 2. Verifikasi kredensial ─────────────────────────────────────────────────
+  // ── 3. Verifikasi password ────────────────────────────────────────────────────
+  const isValid = await bcrypt.compare(password, user.passwordHash).catch(() => false);
+  if (!isValid) {
+    void writeLog({ email, ip, userAgent, success: false, reason: "wrong_password", userId: user.id });
+    return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
+  }
+
+  // ── 4. Buat JWT ───────────────────────────────────────────────────────────────
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    return { error: "Konfigurasi server bermasalah (AUTH_SECRET). Hubungi admin." };
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  const cookieName = isProduction
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
-      select: { id: true, name: true, email: true, role: true, passwordHash: true },
+    // Lazy import encode — menghindari bundling issue di Vercel
+    const { encode } = await import("next-auth/jwt");
+    const token = await encode({
+      token: {
+        sub: user.id,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      secret,
+      salt: cookieName,
+      maxAge: 30 * 24 * 60 * 60,
     });
 
-    if (!user) {
-      void writeLog({ email, ip, userAgent, success: false, reason: "user_not_found" });
-      return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
-    }
-
-    const isValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isValid) {
-      void writeLog({ email, ip, userAgent, success: false, reason: "wrong_password", userId: user.id });
-      return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
-    }
-
-    // ── 3. Buat session token ─────────────────────────────────────────────────
-    const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
-    if (!secret) {
-      return { error: "Konfigurasi server bermasalah (AUTH_SECRET missing)." };
-    }
-
-    const isProduction = process.env.NODE_ENV === "production";
-    const cookieName = isProduction
-      ? "__Secure-authjs.session-token"
-      : "authjs.session-token";
-
-    const token = await createSessionToken(
-      { sub: user.id, id: user.id, name: user.name, email: user.email, role: user.role },
-      secret,
-      cookieName
-    );
-
-    // ── 4. Set cookie ─────────────────────────────────────────────────────────
+    // ── 5. Set cookie ─────────────────────────────────────────────────────────
     const cookieStore = await cookies();
     cookieStore.set(cookieName, token, {
       httpOnly: true,
@@ -119,14 +95,12 @@ export async function loginAction(
       maxAge: 30 * 24 * 60 * 60,
     });
 
-    // ── 5. Log sukses ke MongoDB ──────────────────────────────────────────────
     void writeLog({ email: user.email, ip, userAgent, success: true, userId: user.id, role: user.role });
-
     return {};
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[loginAction] ERROR:", msg);
+    console.error("[loginAction] JWT/Cookie error:", msg);
     return { error: `Login gagal: ${msg}` };
   }
 }
