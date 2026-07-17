@@ -4,8 +4,6 @@ import { cookies, headers } from "next/headers";
 import { encode } from "next-auth/jwt";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
-import { loginRatelimit } from "@/lib/ratelimit";
-import { getMongoDb } from "@/lib/mongodb";
 
 export async function loginAction(
   email: string,
@@ -24,29 +22,25 @@ export async function loginAction(
       ?? headerStore.get("x-real-ip")
       ?? "anonymous";
     userAgent = headerStore.get("user-agent") ?? "unknown";
-  } catch {
-    // headers() gagal — tidak kritis, lanjutkan
-  }
+  } catch { /* tidak kritis */ }
 
-  // ── 1. Rate Limiting (wrapped agar tidak crash login jika Redis bermasalah) ──
+  // ── 1. Rate Limiting (lazy import agar tidak crash saat module load) ─────────
   try {
+    const { loginRatelimit } = await import("@/lib/ratelimit");
     if (loginRatelimit) {
-      const { success, limit, remaining, reset } = await loginRatelimit.limit(ip);
+      const { success, reset } = await loginRatelimit.limit(ip);
       if (!success) {
-        const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
-        const retryMinutes = Math.ceil(retryAfterSeconds / 60);
-        await writeLoginLog({ email, ip, userAgent, success: false, reason: "rate_limited" });
+        const retryMinutes = Math.ceil((reset - Date.now()) / 60000);
+        void writeLog({ email, ip, userAgent, success: false, reason: "rate_limited" });
         return {
-          error: `Terlalu banyak percobaan login. Coba lagi dalam ${retryMinutes} menit.`,
+          error: `Terlalu banyak percobaan. Coba lagi dalam ${retryMinutes} menit.`,
           rateLimited: true,
-          retryAfter: retryAfterSeconds,
+          retryAfter: Math.ceil((reset - Date.now()) / 1000),
         };
       }
-      console.log(`[loginAction] IP: ${ip} | Remaining: ${remaining}/${limit}`);
     }
-  } catch (rateErr) {
-    // Jika Redis error, lewati rate limiting — jangan blokir login
-    console.warn("[loginAction] Rate limit check failed (Redis?):", rateErr);
+  } catch (e) {
+    console.warn("[loginAction] Rate limit skip (Redis unavailable):", e);
   }
 
   // ── 2. Verifikasi kredensial ───────────────────────────────────────────────
@@ -57,21 +51,20 @@ export async function loginAction(
     });
 
     if (!user) {
-      await writeLoginLog({ email, ip, userAgent, success: false, reason: "user_not_found" });
+      void writeLog({ email, ip, userAgent, success: false, reason: "user_not_found" });
       return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
     }
 
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
-      await writeLoginLog({ email, ip, userAgent, success: false, reason: "wrong_password", userId: user.id });
+      void writeLog({ email, ip, userAgent, success: false, reason: "wrong_password", userId: user.id });
       return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
     }
 
     // ── 3. Buat JWT ───────────────────────────────────────────────────────────
     const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
     if (!secret) {
-      console.error("[loginAction] AUTH_SECRET tidak ditemukan!");
-      return { error: "Konfigurasi server bermasalah (AUTH_SECRET). Hubungi administrator." };
+      return { error: "Konfigurasi server bermasalah (AUTH_SECRET missing). Hubungi admin." };
     }
 
     const isProduction = process.env.NODE_ENV === "production";
@@ -105,8 +98,8 @@ export async function loginAction(
       maxAge: 30 * 24 * 60 * 60,
     });
 
-    // ── 5. Catat ke MongoDB (fire-and-forget) ─────────────────────────────────
-    await writeLoginLog({ email: user.email, ip, userAgent, success: true, userId: user.id, role: user.role });
+    // ── 5. Log sukses ke MongoDB (fire-and-forget) ────────────────────────────
+    void writeLog({ email: user.email, ip, userAgent, success: true, userId: user.id, role: user.role });
 
     return {};
 
@@ -117,15 +110,18 @@ export async function loginAction(
   }
 }
 
-async function writeLoginLog(data: {
+// Fire-and-forget: tulis log ke MongoDB via lazy import
+async function writeLog(data: {
   email: string; ip: string; userAgent: string; success: boolean;
   reason?: string; userId?: string; role?: string;
 }) {
   try {
+    const { getMongoDb } = await import("@/lib/mongodb");
     const db = await getMongoDb();
-    if (!db) return;
-    await db.collection("login_logs").insertOne({ ...data, timestamp: new Date() });
+    if (db) {
+      await db.collection("login_logs").insertOne({ ...data, timestamp: new Date() });
+    }
   } catch (e) {
-    console.warn("[MongoDB] Gagal tulis log:", e);
+    console.warn("[MongoDB] Log gagal:", e);
   }
 }
