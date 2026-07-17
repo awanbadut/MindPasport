@@ -9,7 +9,13 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   // Paket Node.js native — jangan di-bundle, jalankan sebagai external
-  serverExternalPackages: ["mongodb", "@upstash/redis", "@upstash/ratelimit"],
+  serverExternalPackages: [
+    "mongodb",
+    "@upstash/redis",
+    "@upstash/ratelimit",
+    "next-auth",
+    "@auth/core",
+  ],
 };
 
 export default nextConfig;

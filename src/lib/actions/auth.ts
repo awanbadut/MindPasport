@@ -1,9 +1,46 @@
 "use server";
 
 import { cookies, headers } from "next/headers";
-import { encode } from "next-auth/jwt";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+
+// Buat JWT token yang kompatibel dengan NextAuth v5 / Auth.js
+// menggunakan jose (sudah jadi dependency next-auth) secara langsung
+// Format: JWE dir + A256CBC-HS512 dengan HKDF key derivation (sama persis dengan next-auth)
+async function createSessionToken(
+  payload: Record<string, unknown>,
+  secret: string,
+  salt: string
+): Promise<string> {
+  const { EncryptJWT } = await import("jose");
+  const { hkdfSync } = await import("crypto");
+
+  // Derive encryption key pakai HKDF — persis seperti @auth/core/jwt
+  const derivedKeyBuffer = hkdfSync(
+    "sha256",
+    Buffer.from(secret),
+    Buffer.from(salt),
+    "",
+    32
+  );
+
+  const encKey = await crypto.subtle.importKey(
+    "raw",
+    derivedKeyBuffer,
+    { name: "AES-CBC" },
+    false,
+    ["encrypt"]
+  );
+
+  const now = Math.floor(Date.now() / 1000);
+
+  return new EncryptJWT({ ...payload, iat: now, exp: now + 30 * 24 * 60 * 60 })
+    .setProtectedHeader({ alg: "dir", enc: "A256CBC-HS512" })
+    .setIssuedAt(now)
+    .setExpirationTime(now + 30 * 24 * 60 * 60)
+    .setJti(crypto.randomUUID())
+    .encrypt(encKey as Parameters<InstanceType<typeof EncryptJWT>["encrypt"]>[0]);
+}
 
 export async function loginAction(
   email: string,
@@ -18,13 +55,14 @@ export async function loginAction(
 
   try {
     const headerStore = await headers();
-    ip = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim()
-      ?? headerStore.get("x-real-ip")
-      ?? "anonymous";
+    ip =
+      headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      headerStore.get("x-real-ip") ??
+      "anonymous";
     userAgent = headerStore.get("user-agent") ?? "unknown";
   } catch { /* tidak kritis */ }
 
-  // ── 1. Rate Limiting (lazy import agar tidak crash saat module load) ─────────
+  // ── 1. Rate Limiting (lazy, tidak crash jika Redis error) ────────────────────
   try {
     const { loginRatelimit } = await import("@/lib/ratelimit");
     if (loginRatelimit) {
@@ -39,11 +77,11 @@ export async function loginAction(
         };
       }
     }
-  } catch (e) {
-    console.warn("[loginAction] Rate limit skip (Redis unavailable):", e);
+  } catch {
+    // Redis error → skip rate limiting, lanjutkan login
   }
 
-  // ── 2. Verifikasi kredensial ───────────────────────────────────────────────
+  // ── 2. Verifikasi kredensial ─────────────────────────────────────────────────
   try {
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
@@ -61,10 +99,10 @@ export async function loginAction(
       return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
     }
 
-    // ── 3. Buat JWT ───────────────────────────────────────────────────────────
+    // ── 3. Buat session token ─────────────────────────────────────────────────
     const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
     if (!secret) {
-      return { error: "Konfigurasi server bermasalah (AUTH_SECRET missing). Hubungi admin." };
+      return { error: "Konfigurasi server bermasalah (AUTH_SECRET missing)." };
     }
 
     const isProduction = process.env.NODE_ENV === "production";
@@ -72,23 +110,13 @@ export async function loginAction(
       ? "__Secure-authjs.session-token"
       : "authjs.session-token";
 
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    const token = await encode({
-      token: {
-        sub: user.id,
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        iat: nowSeconds,
-        exp: nowSeconds + 30 * 24 * 60 * 60,
-      },
+    const token = await createSessionToken(
+      { sub: user.id, id: user.id, name: user.name, email: user.email, role: user.role },
       secret,
-      salt: cookieName,
-      maxAge: 30 * 24 * 60 * 60,
-    });
+      cookieName
+    );
 
-    // ── 4. Set cookie sesi ────────────────────────────────────────────────────
+    // ── 4. Set cookie ─────────────────────────────────────────────────────────
     const cookieStore = await cookies();
     cookieStore.set(cookieName, token, {
       httpOnly: true,
@@ -98,7 +126,7 @@ export async function loginAction(
       maxAge: 30 * 24 * 60 * 60,
     });
 
-    // ── 5. Log sukses ke MongoDB (fire-and-forget) ────────────────────────────
+    // ── 5. Log sukses ke MongoDB ──────────────────────────────────────────────
     void writeLog({ email: user.email, ip, userAgent, success: true, userId: user.id, role: user.role });
 
     return {};
@@ -110,7 +138,6 @@ export async function loginAction(
   }
 }
 
-// Fire-and-forget: tulis log ke MongoDB via lazy import
 async function writeLog(data: {
   email: string; ip: string; userAgent: string; success: boolean;
   reason?: string; userId?: string; role?: string;
@@ -118,10 +145,6 @@ async function writeLog(data: {
   try {
     const { getMongoDb } = await import("@/lib/mongodb");
     const db = await getMongoDb();
-    if (db) {
-      await db.collection("login_logs").insertOne({ ...data, timestamp: new Date() });
-    }
-  } catch (e) {
-    console.warn("[MongoDB] Log gagal:", e);
-  }
+    if (db) await db.collection("login_logs").insertOne({ ...data, timestamp: new Date() });
+  } catch { /* tidak kritis */ }
 }
