@@ -15,31 +15,24 @@ async function createSessionToken(
   const { EncryptJWT } = await import("jose");
   const { hkdfSync } = await import("crypto");
 
-  // Derive encryption key pakai HKDF — persis seperti @auth/core/jwt
-  const derivedKeyBuffer = hkdfSync(
+  // Auth.js v5 key derivation: 64 bytes untuk A256CBC-HS512
+  // Info string harus sama persis dengan @auth/core
+  const derivedKey = hkdfSync(
     "sha256",
     Buffer.from(secret),
     Buffer.from(salt),
-    "",
-    32
-  );
-
-  const encKey = await crypto.subtle.importKey(
-    "raw",
-    derivedKeyBuffer,
-    { name: "AES-CBC" },
-    false,
-    ["encrypt"]
+    `Auth.js Generated Encryption Key (${salt})`,
+    64 // A256CBC-HS512 = 512-bit = 64 bytes
   );
 
   const now = Math.floor(Date.now() / 1000);
 
-  return new EncryptJWT({ ...payload, iat: now, exp: now + 30 * 24 * 60 * 60 })
+  return new EncryptJWT({ ...payload })
     .setProtectedHeader({ alg: "dir", enc: "A256CBC-HS512" })
     .setIssuedAt(now)
     .setExpirationTime(now + 30 * 24 * 60 * 60)
     .setJti(crypto.randomUUID())
-    .encrypt(encKey as Parameters<InstanceType<typeof EncryptJWT>["encrypt"]>[0]);
+    .encrypt(new Uint8Array(derivedKey)); // Uint8Array, bukan CryptoKey
 }
 
 export async function loginAction(
