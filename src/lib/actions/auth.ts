@@ -23,11 +23,21 @@ export async function loginAction(
     userAgent = headerStore.get("user-agent") ?? "unknown";
   } catch { /* tidak kritis */ }
 
-  // ── 1. Rate Limiting ─────────────────────────────────────────────────────────
+  // ── 1. Rate Limiting — inisialisasi langsung (sama dengan debug-ratelimit) ───
   try {
-    const { loginRatelimit } = await import("@/lib/ratelimit");
-    if (loginRatelimit) {
-      const { success, reset } = await loginRatelimit.limit(ip);
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      const { Redis } = await import("@upstash/redis");
+      const { Ratelimit } = await import("@upstash/ratelimit");
+      const redisClient = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      });
+      const ratelimit = new Ratelimit({
+        redis: redisClient,
+        limiter: Ratelimit.slidingWindow(5, "15 m"),
+        prefix: "mindpassport:login",
+      });
+      const { success, reset } = await ratelimit.limit(ip);
       if (!success) {
         const retryMinutes = Math.ceil((reset - Date.now()) / 60000);
         void writeLog({ email, ip, userAgent, success: false, reason: "rate_limited" });
