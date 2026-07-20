@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await auth();
+  const isLoggedIn = !!session?.user;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white relative overflow-hidden">
       {/* Background Gradients */}
@@ -22,18 +26,29 @@ export default function LandingPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="text-slate-300 hover:text-white text-sm font-semibold transition-colors px-3 py-2"
-          >
-            Masuk
-          </Link>
-          <Link
-            href="/register"
-            className="bg-white/10 hover:bg-white/15 text-white border border-white/10 text-sm font-semibold px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95"
-          >
-            Daftar
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-sm px-5 py-2 rounded-xl transition-all hover:scale-105 shadow-md shadow-indigo-500/20"
+            >
+              Buka Dashboard →
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-slate-300 hover:text-white text-sm font-semibold transition-colors px-3 py-2"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                className="bg-white/10 hover:bg-white/15 text-white border border-white/10 text-sm font-semibold px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95"
+              >
+                Daftar
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
