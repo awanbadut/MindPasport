@@ -223,12 +223,12 @@ export default function IndustryMatchPage() {
 
                 {/* Footer action shortcut link */}
                 <div className="flex justify-end pt-4 border-t border-neutral-100">
-                  <a
+                  <Link
                     href={`/skill-gap?role=${selectedResult.careerRoleId}`}
                     className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-semibold transition-colors"
                   >
                     Mulai Skill Gap Analysis untuk Role Ini 📊
-                  </a>
+                  </Link>
                 </div>
               </div>
             )}

@@ -64,6 +64,10 @@ export async function PATCH(
       },
     });
 
+    // Otomatis perbarui Career Readiness Score jika item diselesaikan
+    const { updateReadinessScore } = await import("@/lib/readiness-calculator");
+    await updateReadinessScore(session.user.id);
+
     return NextResponse.json({ success: true, data: updatedItem });
   } catch (err) {
     console.error("[PATCH /api/roadmap/item/[id]] Error:", err);

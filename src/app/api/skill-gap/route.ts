@@ -116,6 +116,10 @@ export async function POST(request: Request) {
       )
     );
 
+    // Otomatis perbarui Career Readiness Score
+    const { updateReadinessScore } = await import("@/lib/readiness-calculator");
+    await updateReadinessScore(session.user.id);
+
     return NextResponse.json(
       {
         success: true,

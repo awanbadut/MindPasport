@@ -90,7 +90,7 @@ export async function GET() {
         progressEntries,
         latestReadiness,
         // Generate QR URL (bukan base64, cukup URL publik)
-        publicUrl: `${process.env.NEXTAUTH_URL}/passport/${passport.publicSlug}`,
+        publicUrl: `${process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "")}/passport/${passport.publicSlug}`,
       },
     });
   } catch (err) {

@@ -68,6 +68,10 @@ export async function POST(request: Request) {
       );
     }
 
+    // Otomatis perbarui Career Readiness Score setelah ada aktivitas baru
+    const { updateReadinessScore } = await import("@/lib/readiness-calculator");
+    await updateReadinessScore(session.user.id);
+
     return NextResponse.json({ success: true, data: entry }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/progress] Error:", err);

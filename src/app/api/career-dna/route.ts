@@ -182,11 +182,25 @@ ${careerRoles.map(r => `- ID: ${r.id}, Title: "${r.title}", Category: "${r.categ
   };
   let recommendedCareers: { careerRoleId: string; title: string; matchPercentage: number }[] = [];
 
-  if (geminiResult.success) {
+  if (geminiResult.success && geminiResult.data?.recommendedCareers?.length > 0) {
     topTraits = geminiResult.data.topTraits;
     recommendedCareers = geminiResult.data.recommendedCareers;
   } else {
-    console.warn("[career-dna] Gemini gagal, insight AI tidak tersedia:", geminiResult.error);
+    console.warn("[career-dna] Gemini unavailable/fallback:", geminiResult.success ? "empty recommendations" : geminiResult.error);
+    const avgScore = Math.round((directionScore + natureScore + abilityScore + careerFitScore + growthPotentialScore) / 5);
+    recommendedCareers = careerRoles.slice(0, 4).map((r, idx) => ({
+      careerRoleId: r.id,
+      title: r.title,
+      matchPercentage: Math.max(65, Math.min(95, avgScore - idx * 4)),
+    }));
+
+    topTraits = {
+      direction: directionScore >= 60 ? ["Tujuan Jelas", "Masa Depan Terarah"] : ["Perlu Eksplorasi"],
+      nature: natureScore >= 60 ? ["Analitis & Sistematis", "Kolaboratif"] : ["Adaptif"],
+      ability: abilityScore >= 60 ? ["Teknis Kuat", "Problem Solver"] : ["Sedang Berkembang"],
+      careerFit: careerFitScore >= 60 ? ["Sangat Fit", "Fokus Industri"] : ["Cukup Fit"],
+      growthPotential: growthPotentialScore >= 60 ? ["Pembelajar Cepat", "Tangguh"] : ["Potensial"],
+    };
   }
 
   // 6. Simpan ke database (upsert untuk mendukung retake)
@@ -214,6 +228,10 @@ ${careerRoles.map(r => `- ID: ${r.id}, Title: "${r.title}", Category: "${r.categ
       recommendedCareers: recommendedCareers as any,
     },
   });
+
+  // 7. Otomatis perbarui Career Readiness Score
+  const { updateReadinessScore } = await import("@/lib/readiness-calculator");
+  await updateReadinessScore(userId);
 
   const aiAvailable = geminiResult.success;
 

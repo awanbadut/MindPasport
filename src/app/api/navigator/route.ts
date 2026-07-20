@@ -126,18 +126,38 @@ Kembalikan HANYA JSON valid:
       userPrompt: promptContext,
     });
 
-    if (!geminiResult.success) {
-      // Jangan tampilkan data dummy — beri tahu user secara jujur
-      return NextResponse.json(
+    let recommendations = geminiResult.success ? geminiResult.data?.recommendations : [];
+
+    if (!recommendations || recommendations.length === 0) {
+      console.warn("[navigator] Gemini unavailable/fallback:", geminiResult.success ? "empty recommendations" : geminiResult.error);
+      const targetTitle = latestSkillGap?.careerRole?.title ?? "Digital Specialist";
+      const topSkillName = prioritySkills[0]?.split(" ")[0] ?? "Kompetensi Utama";
+      recommendations = [
         {
-          success: false,
-          error: {
-            code: "AI_ERROR",
-            message: "Gagal mendapat rekomendasi dari AI, coba lagi nanti",
-          },
+          type: "training",
+          title: `Pelatihan Intensif ${topSkillName}`,
+          reason: `Membantu Anda memperkecil gap pada ${topSkillName} sesuai target karier ${targetTitle}.`,
+          url: null,
         },
-        { status: 503 }
-      );
+        {
+          type: "project",
+          title: `Proyek Portofolio ${targetTitle}`,
+          reason: `Implementasi praktis keahlian Anda untuk membuktikan kompetensi di industri.`,
+          url: null,
+        },
+        {
+          type: "internship",
+          title: `Program Magang / Studi Independen ${targetTitle}`,
+          reason: `Meningkatkan skor Pengalaman Praktis pada indikator Career Readiness Anda.`,
+          url: null,
+        },
+        {
+          type: "career-path",
+          title: `Eksplorasi Peran ${targetTitle}`,
+          reason: `Berada dalam jalur pengembangan utama sesuai hasil Career DNA & Skill Gap Anda.`,
+          url: null,
+        },
+      ];
     }
 
     // Update rate limit tracker
@@ -148,7 +168,7 @@ Kembalikan HANYA JSON valid:
       data: {
         userId,
         prompt: promptContext.slice(0, 500), // simpan ringkasan, bukan prompt penuh
-        recommendations: geminiResult.data.recommendations as any,
+        recommendations: recommendations as any,
       },
     });
 
@@ -157,7 +177,7 @@ Kembalikan HANYA JSON valid:
       data: {
         id: log.id,
         createdAt: log.createdAt,
-        recommendations: geminiResult.data.recommendations,
+        recommendations,
       },
     });
   } catch (err) {

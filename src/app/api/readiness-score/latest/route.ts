@@ -14,14 +14,19 @@ export async function GET() {
       );
     }
 
-    const latest = await prisma.readinessScoreHistory.findFirst({
+    let latest = await prisma.readinessScoreHistory.findFirst({
       where: { userId: session.user.id },
       orderBy: { calculatedAt: "desc" },
     });
 
     if (!latest) {
+      const { updateReadinessScore } = await import("@/lib/readiness-calculator");
+      latest = await updateReadinessScore(session.user.id);
+    }
+
+    if (!latest) {
       return NextResponse.json(
-        { success: false, error: { code: "NOT_FOUND", message: "Skor belum dihitung" } },
+        { success: false, error: { code: "NOT_FOUND", message: "Skor belum dapat dihitung" } },
         { status: 404 }
       );
     }

@@ -44,9 +44,16 @@ export default function SkillGapPage() {
         const json = await res.json();
         if (json.success) {
           setCareerRoles(json.data);
-          // Auto select if query param exists
+          // Auto select if query param exists (matches ID or Title)
           if (initialRoleParam) {
-            setSelectedRoleId(initialRoleParam);
+            const matched = json.data.find(
+              (r: any) =>
+                r.id === initialRoleParam ||
+                r.title.toLowerCase() === initialRoleParam.toLowerCase()
+            );
+            if (matched) {
+              setSelectedRoleId(matched.id);
+            }
           }
         }
       } catch (err) {
