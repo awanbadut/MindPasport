@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -119,6 +120,26 @@ interface SidebarProps {
 
 export function Sidebar({ onClose, userRole }: SidebarProps) {
   const pathname = usePathname();
+  const [readinessData, setReadinessData] = useState<{ score: number; category: string } | null>(null);
+
+  useEffect(() => {
+    if (userRole === "ADMIN") return;
+    async function fetchScore() {
+      try {
+        const res = await fetch("/api/readiness-score/latest");
+        const json = await res.json();
+        if (json.success && json.data) {
+          setReadinessData({
+            score: json.data.displayScore ?? Math.round(json.data.finalScore),
+            category: json.data.category ?? "Siap untuk level berikutnya!",
+          });
+        }
+      } catch {
+        // ignore
+      }
+    }
+    fetchScore();
+  }, [userRole, pathname]);
 
   return (
     <aside className="flex flex-col h-full bg-[#1E1B4B] text-white w-64 flex-shrink-0">
@@ -264,15 +285,22 @@ export function Sidebar({ onClose, userRole }: SidebarProps) {
       {userRole !== "ADMIN" && (
         <div className="px-4 pb-4">
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <p className="text-xs text-indigo-300 font-medium mb-1">Readiness Score</p>
+            <p className="text-xs text-indigo-300 font-medium mb-1">Career Readiness Score</p>
             <div className="flex items-end gap-2 mb-2">
-              <span className="text-2xl font-bold text-white">72</span>
+              <span className="text-2xl font-bold text-white">
+                {readinessData ? readinessData.score : "—"}
+              </span>
               <span className="text-indigo-400 text-sm mb-0.5">/100</span>
             </div>
             <div className="w-full bg-white/10 rounded-full h-1.5">
-              <div className="bg-gradient-to-r from-indigo-400 to-purple-400 h-1.5 rounded-full" style={{ width: '72%' }} />
+              <div
+                className="bg-gradient-to-r from-indigo-400 to-purple-400 h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${readinessData ? readinessData.score : 0}%` }}
+              />
             </div>
-            <p className="text-xs text-indigo-400 mt-2">🎯 Siap untuk level berikutnya!</p>
+            <p className="text-xs text-indigo-300 mt-2 truncate">
+              🎯 {readinessData ? readinessData.category : "Menghitung kesiapan..."}
+            </p>
           </div>
         </div>
       )}
