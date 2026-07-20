@@ -26,10 +26,22 @@ export async function GET() {
       );
     }
 
-    const publicUrl = `${process.env.NEXTAUTH_URL}/passport/${passport.publicSlug}`;
+    const baseUrl =
+      process.env.NEXTAUTH_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "https://mind-pasport-awanbadutt77.vercel.app");
+
+    const cleanBaseUrl = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+    const publicUrl = `${cleanBaseUrl.replace(/\/$/, "")}/passport/${passport.publicSlug}`;
+
     const qrCodeDataUrl = await QRCode.toDataURL(publicUrl, {
-      width: 256,
+      width: 300,
       margin: 2,
+      color: {
+        dark: "#1e1b4b", // Dark indigo for high contrast scan
+        light: "#ffffff",
+      },
     });
 
     return NextResponse.json({

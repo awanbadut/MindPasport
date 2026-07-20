@@ -46,7 +46,7 @@ export async function GET(
         take: 10, // top 10 skill
       }),
       prisma.progressEntry.findMany({
-        where: { userId, verified: true }, // hanya yang terverifikasi untuk halaman publik
+        where: { userId }, // Tampilkan semua aktivitas beserta status verifikasinya
         orderBy: { createdAt: "desc" },
         take: 10,
         select: {

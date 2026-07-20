@@ -23,6 +23,7 @@ interface PublicPassportData {
     organizer?: string;
     startDate?: string;
     endDate?: string;
+    verified?: boolean;
   }>;
 }
 
@@ -191,9 +192,15 @@ export default function PublicPassportPage({
                         <h4 className="font-bold text-neutral-800 text-sm mt-1">{e.title}</h4>
                         {e.organizer && <p className="text-xs text-neutral-500 mt-0.5">{e.organizer}</p>}
                       </div>
-                      <span className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        ✓ Terverifikasi
-                      </span>
+                      {e.verified ? (
+                        <span className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
+                          ✓ Terverifikasi
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
+                          ⏳ Ditinjau
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
