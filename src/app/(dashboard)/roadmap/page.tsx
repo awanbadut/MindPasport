@@ -68,16 +68,16 @@ export default function RoadmapPage() {
 
         const json = await res.json();
         if (json.success) {
-          // Clear query param
-          router.replace("/roadmap");
-          fetchRoadmaps();
+          setActiveRoadmap(json.data);
+          window.history.replaceState({}, "", "/roadmap");
         } else {
           setError(json.error.message || "Gagal membuat roadmap.");
-          setGenerating(false);
         }
       } catch {
         setError("Gagal membuat roadmap, koneksi error.");
+      } finally {
         setGenerating(false);
+        setLoading(false);
       }
     };
 

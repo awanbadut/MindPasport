@@ -100,9 +100,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, data: roadmap }, { status: 201 });
     }
 
-    // Panggil Gemini untuk deskripsi dan rekomendasi aktivitas
-    const geminiResult = await generateJsonResponse<RoadmapGeminiResponse>({
-      systemInstruction: `Kamu adalah konselor karier yang menyusun roadmap pengembangan skill personal.
+    // Panggil Gemini dengan timeout 4 detik agar pembuatan roadmap super cepat & tidak menggantung
+    const timeoutPromise = new Promise<{ success: false; error: string }>(resolve =>
+      setTimeout(() => resolve({ success: false, error: "TIMEOUT" }), 4000)
+    );
+
+    const geminiResult = await Promise.race([
+      generateJsonResponse<RoadmapGeminiResponse>({
+        systemInstruction: `Kamu adalah konselor karier yang menyusun roadmap pengembangan skill personal.
 Berdasarkan daftar skill yang perlu dikembangkan (sudah diurutkan dari prioritas tertinggi ke terendah), 
 tulis deskripsi dan rekomendasi aktivitas konkret untuk tiap skill.
 
@@ -125,13 +130,15 @@ Kembalikan HANYA JSON valid dengan skema:
     }
   ]
 }`,
-      userPrompt: `Career target: ${analysis.careerRole.title}
-      
+        userPrompt: `Career target: ${analysis.careerRole.title}
+        
 Skill yang perlu dikembangkan (sudah diurutkan dari prioritas tertinggi):
 ${skillsForRoadmap.map((s, i) => 
   `${i+1}. [${s.priority}] ${s.skillName} (skor kamu: ${s.userScore}, standar: ${s.industryScore}, gap: ${s.gap})`
 ).join("\n")}`,
-    });
+      }),
+      timeoutPromise,
+    ]);
 
     let roadmapItems: Array<{
       skillId: string | null;
