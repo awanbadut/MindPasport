@@ -261,21 +261,21 @@ export function Navbar({
                 )}
               </div>
 
-              <div className="border-t border-slate-100 py-1">
-                <form action="/api/auth/signout" method="POST">
-                  <button
-                    type="submit"
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#DC2626] hover:bg-red-50 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                    Keluar
-                  </button>
-                </form>
-              </div>
+                <button
+                  onClick={async () => {
+                    const { logoutAction } = await import("@/lib/actions/auth");
+                    await logoutAction();
+                    window.location.href = "/login";
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#DC2626] hover:bg-red-50 transition-colors font-medium text-left"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                  Keluar dari Akun
+                </button>
             </div>
           )}
         </div>

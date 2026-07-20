@@ -78,3 +78,9 @@ export async function loginAction(
     return { error: `Terjadi kesalahan server: ${msg}` };
   }
 }
+
+export async function logoutAction(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete("authjs.session-token");
+  cookieStore.delete("__Secure-authjs.session-token");
+}

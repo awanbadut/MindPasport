@@ -97,7 +97,7 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm">
           <div className="text-2xl font-bold text-neutral-900">{pagination.total}</div>
           <div className="text-xs text-neutral-500 mt-0.5 font-medium uppercase tracking-wide">Total Log</div>
