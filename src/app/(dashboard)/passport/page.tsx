@@ -49,6 +49,7 @@ export default function CompetencyPassportPage() {
   const [latestReadiness, setLatestReadiness] = useState<Readiness | null>(null);
   const [qrCode, setQrCode] = useState("");
   const [publicUrl, setPublicUrl] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -352,11 +353,12 @@ export default function CompetencyPassportPage() {
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(publicUrl);
-                        alert("Link berhasil disalin ke clipboard!");
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
                       }}
                       className="px-3 py-2 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-600 rounded-xl text-xs font-semibold transition-colors flex-shrink-0"
                     >
-                      Salin
+                      {copied ? "Disalin! ✓" : "Salin"}
                     </button>
                   </div>
                 </div>
