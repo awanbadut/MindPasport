@@ -15,10 +15,8 @@ export default async function LandingPage() {
       {/* Header / Navbar */}
       <header className="relative max-w-7xl mx-auto w-full px-6 py-6 flex items-center justify-between z-20 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
+          <div className="w-9 h-9 rounded-xl bg-white/10 p-1 flex items-center justify-center shadow-lg shadow-indigo-500/20 border border-white/10">
+            <img src="/logo.png" alt="Mind Passport Logo" className="w-full h-full object-contain rounded-lg" />
           </div>
           <span className="font-extrabold text-lg text-white leading-none tracking-tight">
             Mind Passport

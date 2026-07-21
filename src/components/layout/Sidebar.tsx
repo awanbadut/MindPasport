@@ -145,12 +145,8 @@ export function Sidebar({ onClose, userRole }: SidebarProps) {
     <aside className="flex flex-col h-full bg-[#1E1B4B] text-white w-64 flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-            />
-          </svg>
+        <div className="w-9 h-9 rounded-xl bg-white/10 p-1 flex items-center justify-center flex-shrink-0 shadow-lg border border-white/20">
+          <img src="/logo.png" alt="Mind Passport Logo" className="w-full h-full object-contain rounded-lg" />
         </div>
         <div className="min-w-0">
           <span className="block text-white font-bold text-base leading-tight tracking-tight">

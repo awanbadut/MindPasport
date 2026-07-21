@@ -109,10 +109,8 @@ export default function PublicPassportPage({
         {/* Branding header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+            <div className="w-8 h-8 rounded-lg bg-neutral-100 border border-neutral-200 p-0.5 flex items-center justify-center">
+              <img src="/logo.png" alt="Mind Passport Logo" className="w-full h-full object-contain rounded" />
             </div>
             <span className="font-bold text-neutral-800 text-lg">Mind Passport</span>
           </div>
