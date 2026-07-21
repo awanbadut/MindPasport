@@ -138,6 +138,9 @@ model SkillRoadmap {
   careerRole    CareerRole?   @relation(fields: [careerRoleId], references: [id])
   title         String
   status        String        @default("active") // "active" | "completed" | "archived"
+  startedAt     DateTime?     @default(now())
+  targetDays    Int           @default(30)
+  extendedDays  Int           @default(0)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

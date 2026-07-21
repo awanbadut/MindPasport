@@ -18,9 +18,37 @@ interface Roadmap {
   id: string;
   title: string;
   status: string;
+  startedAt?: string | null;
+  targetDays?: number;
+  extendedDays?: number;
   createdAt: string;
   careerRole?: { title: string; category: string };
   items: RoadmapItem[];
+}
+
+function getElapsedTime(startedAtStr?: string | null) {
+  if (!startedAtStr) return "Belum dimulai";
+  const start = new Date(startedAtStr).getTime();
+  const now = Date.now();
+  const diffMs = Math.max(0, now - start);
+  const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+
+  if (days === 0 && hours === 0) return "Baru saja dimulai";
+  if (days === 0) return `${hours} jam`;
+  return `${days} hari ${hours} jam`;
+}
+
+function getTargetFinishDate(startedAtStr?: string | null, targetDays = 30, extendedDays = 0) {
+  const startDate = startedAtStr ? new Date(startedAtStr) : new Date();
+  const totalDays = (targetDays || 30) + (extendedDays || 0);
+  const finishDate = new Date(startDate.getTime() + totalDays * 24 * 60 * 60 * 1000);
+  return finishDate.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 export default function RoadmapPage() {
@@ -114,6 +142,40 @@ export default function RoadmapPage() {
     }
   };
 
+  const handleStartRoadmap = async () => {
+    if (!activeRoadmap) return;
+    try {
+      const res = await fetch(`/api/roadmap/${activeRoadmap.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setActiveRoadmap(json.data);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleExtendDays = async (days: number) => {
+    if (!activeRoadmap) return;
+    try {
+      const res = await fetch(`/api/roadmap/${activeRoadmap.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extendDays: days }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setActiveRoadmap(json.data);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "Sangat Prioritas": return "text-red-600 bg-red-50 border-red-200";
@@ -172,25 +234,69 @@ export default function RoadmapPage() {
         <>
           {activeRoadmap ? (
             <div className="space-y-6">
-              {/* Header card info */}
-              <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100 uppercase tracking-wide">
-                    {activeRoadmap.careerRole?.category || "Target"}
-                  </span>
-                  <h2 className="text-xl font-bold text-neutral-900 mt-2">{activeRoadmap.title}</h2>
-                  <p className="text-xs text-neutral-400 mt-1">
-                    Dibuat pada: {new Date(activeRoadmap.createdAt).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}
-                  </p>
+              {/* Header card info & timing control */}
+              <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-100 pb-4">
+                  <div>
+                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100 uppercase tracking-wide">
+                      {activeRoadmap.careerRole?.category || "Target"}
+                    </span>
+                    <h2 className="text-xl font-bold text-neutral-900 mt-2">{activeRoadmap.title}</h2>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      Dibuat pada: {new Date(activeRoadmap.createdAt).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-start sm:items-end justify-center">
+                    <span className="text-2xl font-black text-indigo-600">
+                      {activeRoadmap.items.filter(i => i.status === "done").length} / {activeRoadmap.items.length} Selesai
+                    </span>
+                    <p className="text-xs text-neutral-500 font-semibold mt-0.5">
+                      ({Math.round((activeRoadmap.items.filter(i => i.status === "done").length / (activeRoadmap.items.length || 1)) * 100)}% Progress)
+                    </p>
+                  </div>
                 </div>
-                <div className="flex flex-col items-start sm:items-end justify-center">
-                  <span className="text-2xl font-black text-neutral-800">
-                    {Math.round(
-                      (activeRoadmap.items.filter(i => i.status === "done").length / activeRoadmap.items.length) * 100
+
+                {/* Duration & Timer bar */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-neutral-50 border border-neutral-200/80 rounded-xl p-4">
+                  <div>
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block">Waktu Mengerjakan</span>
+                    <p className="text-sm font-bold text-neutral-800 mt-0.5">
+                      ⏱️ {getElapsedTime(activeRoadmap.startedAt)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block">Target Selesai</span>
+                    <p className="text-sm font-bold text-neutral-800 mt-0.5">
+                      📅 {getTargetFinishDate(activeRoadmap.startedAt, activeRoadmap.targetDays, activeRoadmap.extendedDays)}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 justify-start sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-200">
+                    {!activeRoadmap.startedAt ? (
+                      <button
+                        onClick={handleStartRoadmap}
+                        className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+                      >
+                        ▶️ Mulai Roadmap
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleExtendDays(7)}
+                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          ➕ +7 Hari
+                        </button>
+                        <button
+                          onClick={() => handleExtendDays(14)}
+                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          +14 Hari
+                        </button>
+                      </>
                     )}
-                    %
-                  </span>
-                  <p className="text-[10px] text-neutral-500">Rasio Penyelesaian</p>
+                  </div>
                 </div>
               </div>
 
