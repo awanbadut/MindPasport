@@ -144,10 +144,8 @@ export function Sidebar({ onClose, userRole }: SidebarProps) {
   return (
     <aside className="flex flex-col h-full bg-[#1E1B4B] text-white w-64 flex-shrink-0">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        <div className="w-9 h-9 rounded-xl bg-white/10 p-1 flex items-center justify-center flex-shrink-0 shadow-lg border border-white/20">
-          <img src="/logo.png" alt="Mind Passport Logo" className="w-full h-full object-contain rounded-lg" />
-        </div>
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10">
+        <img src="/logo.png" alt="Mind Passport Logo" className="w-12 h-12 object-contain flex-shrink-0 filter drop-shadow-md" />
         <div className="min-w-0">
           <span className="block text-white font-bold text-base leading-tight tracking-tight">
             Mind Passport

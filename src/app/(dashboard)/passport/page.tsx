@@ -188,8 +188,8 @@ export default function CompetencyPassportPage() {
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-500 rounded-full opacity-10 blur-3xl pointer-events-none print:hidden" />
 
             <div className="flex justify-between items-start border-b border-indigo-800/60 pb-6 print:border-neutral-300">
-              <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Mind Passport Logo" className="w-10 h-10 object-contain rounded-lg" />
+              <div className="flex items-center gap-4">
+                <img src="/logo.png" alt="Mind Passport Logo" className="w-16 h-16 object-contain flex-shrink-0 filter drop-shadow-md" />
                 <div className="space-y-0.5">
                   <span className="text-xs font-bold text-indigo-300 tracking-widest uppercase print:text-neutral-500">
                     Mind Passport

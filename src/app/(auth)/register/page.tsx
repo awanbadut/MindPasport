@@ -71,11 +71,9 @@ export default function RegisterPage() {
 
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-white/10 p-1.5 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 border border-white/20">
-              <img src="/logo.png" alt="Mind Passport Logo" className="w-full h-full object-contain rounded-xl" />
-            </div>
-            <div>
+          <div className="inline-flex items-center gap-4 mb-4">
+            <img src="/logo.png" alt="Mind Passport Logo" className="w-16 h-16 object-contain flex-shrink-0 filter drop-shadow-xl" />
+            <div className="text-left">
               <h1 className="text-2xl font-bold text-white tracking-tight">Mind Passport</h1>
               <p className="text-indigo-300 text-xs">Paspor Kompetensi Digital</p>
             </div>

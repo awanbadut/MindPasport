@@ -108,11 +108,9 @@ export default function PublicPassportPage({
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Branding header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-neutral-100 border border-neutral-200 p-0.5 flex items-center justify-center">
-              <img src="/logo.png" alt="Mind Passport Logo" className="w-full h-full object-contain rounded" />
-            </div>
-            <span className="font-bold text-neutral-800 text-lg">Mind Passport</span>
+          <div className="inline-flex items-center gap-3">
+            <img src="/logo.png" alt="Mind Passport Logo" className="w-12 h-12 object-contain flex-shrink-0 filter drop-shadow-md" />
+            <span className="font-bold text-neutral-800 text-xl">Mind Passport</span>
           </div>
           <p className="text-xs text-neutral-400">Verifikasi Resmi Kompetensi Digital Pengguna</p>
         </div>
