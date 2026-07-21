@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import type { ReadinessCategory } from "@/types";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Dashboard",
   description: "Ringkasan perkembangan karier dan kompetensimu di Mind Passport",
@@ -47,8 +50,9 @@ export default async function DashboardPage() {
         orderBy: { calculatedAt: "desc" },
       }),
       prisma.skillRoadmap.findFirst({
-        where: { userId, status: "active" },
-        include: { items: true, careerRole: true },
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        include: { items: { orderBy: { stageNumber: "asc" } }, careerRole: true },
       }),
       prisma.progressEntry.findMany({
         where: { userId },
