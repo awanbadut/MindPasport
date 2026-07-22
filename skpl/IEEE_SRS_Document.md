@@ -1,18 +1,21 @@
-# Spesifikasi Kebutuhan Perangkat Lunak (SKPL)
+# Software Requirements Specification
+## for
+## Mind Passport (Sistem Paspor Kompetensi & Kesiapan Kerja Otonom)
 
-## Dokumen Rekayasa Perangkat Lunak: Mind Passport
-**Sistem Paspor Kompetensi & Kesiapan Karier Otonom Berbasis AI**
+**Version 1.0 approved**
 
-* **Standar Dokumen:** IEEE Std 830-1998
-* **Versi Dokumen:** 1.0 (Final Approved)
-* **Tanggal Penyusunan:** 22 Juli 2026
-* **Penyusun:** Tim Pengembang Mind Passport
-* **Institusi:** Program Studi Teknik Informatika / Sistem Informasi
+**Prepared by**  
+**Zikry Kurniawan**
+
+**22 Juli 2026**
 
 ---
 
-![Arsitektur Sistem Mind Passport](images/architecture_diagram.png)
-*Gambar 0.1 Arsitektur Sistem Utama Mind Passport*
+### Revision History
+
+| Name | Date | Reason For Changes | Version |
+| :--- | :--- | :--- | :--- |
+| **Zikry Kurniawan** | 22 Juli 2026 | Penerbitan Dokumen Resmi SKPL IEEE Std 830-1998 Lengkap | 1.0 |
 
 ---
 
@@ -50,7 +53,7 @@
 ## 1. Pendahuluan
 
 ### 1.1 Tujuan Penulisan Dokumen
-Dokumen Spesifikasi Kebutuhan Perangkat Lunak (SKPL) ini disusun secara komprehensif untuk mendefinisikan secara formal seluruh Kebutuhan Fungsional (*Functional Requirements*) dan Kebutuhan Non-Fungsional (*Non-Functional Requirements*) dari perangkat lunak **Mind Passport**. Dokumen ini dibuat berdasarkan standar internasional **IEEE Std 830-1998** dan bertindak sebagai kontrak teknis resmi antara tim pengembang (*developers*), perancang sistem (*system designers*), penguji (*quality assurance*), dan institusi / penguji akademis untuk memverifikasi kelayakan dan kualitas perangkat lunak.
+Dokumen Spesifikasi Kebutuhan Perangkat Lunak (SKPL) ini disusun secara komprehensif untuk mendefinisikan secara formal seluruh Kebutuhan Fungsional (*Functional Requirements*) dan Kebutuhan Non-Fungsional (*Non-Functional Requirements*) dari perangkat lunak **Mind Passport**. Dokumen ini dibuat berdasarkan standar internasional **IEEE Std 830-1998** dan bertindak sebagai kontrak teknis resmi antara pengembang (**Zikry Kurniawan**), perancang sistem (*system designers*), penguji (*quality assurance*), dan institusi / penguji akademis untuk memverifikasi kelayakan dan kualitas perangkat lunak.
 
 Tujuan teknis khusus dokumen ini mencakup penguraian arsitektur 8 fitur inti (Career DNA, Skill Gap Analysis, Personalized Skill Roadmap, Learning Progress Tracker, Career Readiness Score, Digital Competency Passport, AI Career Navigator, dan Industry Fit Match) serta 3 modul pengelolaan admin agar seluruh proses pengkodean dan pengujian memiliki acuan empiris yang dapat diukur.
 
@@ -87,6 +90,9 @@ Mind Passport adalah ekosistem digital otonom berbasis kecerdasan buatan yang be
 
 ### 2.1 Deskripsi Produk
 Mind Passport dirancang sebagai solusi atas permasalahan kesenjangan keahlian (*skill gap*) yang sering dialami oleh lulusan baru perguruan tinggi. Aplikasi web ini mengintegrasikan seluruh alur pengembangan diri secara otonom: dimulai dari pengisian kuesioner potensi (Career DNA), analisis kekurangan skill terhadap target industri (Skill Gap), penyusunan kurikulum belajar mandiri bertahap (Roadmap), pelacakan portofolio bukti fisik (Progress Tracker), kalkulasi skor kesiapan kerja terpadu (Readiness Score), bimbingan konsultasi AI (Navigator), hingga penerbitan Paspor Kompetensi Digital yang terverifikasi dan siap di-scan oleh pihak rekruter industri.
+
+![Diagram Arsitektur Sistem Utama Mind Passport](images/architecture_diagram.png)
+*Gambar 2.1 Diagram Arsitektur Sistem Utama Mind Passport*
 
 ### 2.2 Fungsi Utama Produk
 Fungsi utama sistem terbagi dalam 8 modul siswa dan 3 modul kontrol administrator:
@@ -243,7 +249,7 @@ Komunikasi data antara client browser dan server menggunakan arsitektur RESTful 
 
 ### 5.2 Lembar Pengesahan Dokumen
 
-Dokumen SKPL ini telah diperiksa, disetujui, dan disahkan oleh pihak pengembang.
+Dokumen SKPL ini telah diperiksa, disetujui, dan disahkan oleh pengembang.
 
-**Tim Pengembang Mind Passport**  
+**Zikry Kurniawan**  
 *Tanggal Pengesahan: 22 Juli 2026*
