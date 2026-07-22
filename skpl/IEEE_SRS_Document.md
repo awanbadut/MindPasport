@@ -3,10 +3,16 @@
 ## Dokumen Rekayasa Perangkat Lunak: Mind Passport
 **Sistem Paspor Kompetensi & Kesiapan Karier Otonom Berbasis AI**
 
-* **Versi:** 1.0 (Disetujui)
-* **Tanggal:** 22 Juli 2026
+* **Standar Dokumen:** IEEE Std 830-1998
+* **Versi Dokumen:** 1.0 (Final Approved)
+* **Tanggal Penyusunan:** 22 Juli 2026
 * **Penyusun:** Tim Pengembang Mind Passport
 * **Institusi:** Program Studi Teknik Informatika / Sistem Informasi
+
+---
+
+![Arsitektur Sistem Mind Passport](images/architecture_diagram.png)
+*Gambar 0.1 Arsitektur Sistem Utama Mind Passport*
 
 ---
 
@@ -14,347 +20,230 @@
 1. **Pendahuluan**
    * 1.1 Tujuan Penulisan Dokumen
    * 1.2 Audien yang Dituju dan Pembaca yang Disarankan
-   * 1.3 Batasan Produk
+   * 1.3 Batasan Produk (Product Scope)
    * 1.4 Definisi dan Istilah
    * 1.5 Referensi
 2. **Deskripsi Keseluruhan**
    * 2.1 Deskripsi Produk
-   * 2.2 Fungsi Produk
+   * 2.2 Fungsi Utama Produk
    * 2.3 Penggolongan Karakteristik Pengguna
-   * 2.4 Lingkungan Operasi
+   * 2.4 Lingkungan Operasi (Operating Environment)
    * 2.5 Batasan Desain dan Implementasi
    * 2.6 Dokumentasi Pengguna
 3. **Kebutuhan Antarmuka Eksternal**
    * 3.1 User Interfaces (Antarmuka Pengguna)
-   * 3.2 Hardware Interface (Antarmuka Perangkat Keras)
-   * 3.3 Software Interface (Antarmuka Perangkat Lunak)
-   * 3.4 Communication Interface (Antarmuka Komunikasi)
+   * 3.2 Hardware Interfaces (Antarmuka Perangkat Keras)
+   * 3.3 Software Interfaces (Antarmuka Perangkat Lunak)
+   * 3.4 Communication Interfaces (Antarmuka Komunikasi & Kamus Data API)
 4. **Kebutuhan Fungsional (Functional Requirements)**
-   * 4.1 Use Case Diagram
-   * 4.2 Deskripsi Use Case (Stimulus & Respon)
-   * 4.3 Class Diagram
+   * 4.1 Daftar Kebutuhan Fungsional (FR-01 s.d FR-17)
+   * 4.2 Use Case Diagram
+   * 4.3 Spesifikasi Use Case Kritis (Stimulus & Respon)
+   * 4.4 Sequence Diagram
+   * 4.5 Class Diagram & ERD Basis Data
 5. **Kebutuhan Non-Fungsional (Non-Functional Requirements)**
-   * 5.1 Parameter Kebutuhan Non-Fungsional
-   * 5.2 Catatan & Batasan Operasional
+   * 5.1 Parameter Kebutuhan Non-Fungsional (NFR-01 s.d NFR-11)
+   * 5.2 Lembar Pengesahan Dokumen
 
 ---
 
 ## 1. Pendahuluan
 
 ### 1.1 Tujuan Penulisan Dokumen
-Dokumen Spesifikasi Kebutuhan Perangkat Lunak (SKPL) ini ditulis dengan tujuan untuk:
-1. Mendefinisikan secara formal kebutuhan fungsional dan non-fungsional dari perangkat lunak **Mind Passport**.
-2. Memberikan panduan teknis yang jelas bagi tim pengembang (*developer*), perancang sistem (*system designer*), penguji (*tester*), dan dosen penguji untuk memverifikasi kesesuaian implementasi sistem dengan spesifikasi rancangan.
-3. Memastikan integrasi antara 8 fitur inti (Career DNA, Skill Gap, Roadmap, Progress Tracker, Readiness Score, Passport QR Code, AI Navigator, dan Industry Match) dapat diukur secara konsisten.
+Dokumen Spesifikasi Kebutuhan Perangkat Lunak (SKPL) ini disusun secara komprehensif untuk mendefinisikan secara formal seluruh Kebutuhan Fungsional (*Functional Requirements*) dan Kebutuhan Non-Fungsional (*Non-Functional Requirements*) dari perangkat lunak **Mind Passport**. Dokumen ini dibuat berdasarkan standar internasional **IEEE Std 830-1998** dan bertindak sebagai kontrak teknis resmi antara tim pengembang (*developers*), perancang sistem (*system designers*), penguji (*quality assurance*), dan institusi / penguji akademis untuk memverifikasi kelayakan dan kualitas perangkat lunak.
+
+Tujuan teknis khusus dokumen ini mencakup penguraian arsitektur 8 fitur inti (Career DNA, Skill Gap Analysis, Personalized Skill Roadmap, Learning Progress Tracker, Career Readiness Score, Digital Competency Passport, AI Career Navigator, dan Industry Fit Match) serta 3 modul pengelolaan admin agar seluruh proses pengkodean dan pengujian memiliki acuan empiris yang dapat diukur.
 
 ### 1.2 Audien yang Dituju dan Pembaca yang Disarankan
-Dokumen ini ditujukan untuk:
-* **Tim Pengembang (Software Engineer):** Sebagai acuan utama implementasi basis kode (Next.js 15, Prisma ORM, PostgreSQL).
-* **Analis Sistem & Desainer UI/UX:** Untuk memvalidasi alur navigasi dan tata letak visual responsif mobile-first.
-* **Tim Penjamin Mutu (Quality Assurance/Tester):** Untuk menyusun skenario pengujian unit, integrasi, dan penerimaan pengguna (UAT).
-* **Dosen Penguji / Reviewer:** Sebagai dokumen evaluasi pertanggungjawaban akademis mengenai arsitektur perangkat lunak yang dikembangkan.
+Dokumen SKPL ini dirancang khusus untuk memandu berbagai pemangku kepentingan (*stakeholders*) berikut:
+* **Tim Pengembang (Software Engineer):** Memahami arsitektur Next.js 15 App Router, skema relasi PostgreSQL Prisma ORM, algoritma fallback 4 detik, dan RESTful API payload.
+* **Perancang UI/UX & Analis Sistem:** Memvalidasi hirarki antarmuka visual responsif (*mobile-first*), sistem navigasi *bottom-bar*, dan skema tema Dark Amber untuk admin.
+* **Penjamin Mutu (QA & Tester):** Menyusun skenario pengujian unit test, pengujian integrasi API, serta pengujian penerimaan pengguna (*User Acceptance Testing / UAT*).
+* **Dosen Penguji & Reviewer:** Sebagai landasan penilai akademis dalam mengevaluasi pemenuhan spesifikasi teknis rekayasa perangkat lunak.
 
-### 1.3 Batasan Produk
-Sistem **Mind Passport** dirancang sebagai aplikasi web berbasis *Next.js 15 App Router*. Batasan operasional sistem meliputi:
-* **Autentikasi:** Menggunakan session berbasis cookies terenkripsi (Next-Auth / Prisma Adapter). Tidak bergantung pada database eksternal di luar PostgreSQL.
-* **AI Engine:** Pemrosesan otonom menggunakan Gemini 1.5 API dengan mekanisme *algorithm fallback* terstruktur jika terjadi kegagalan/timeout API dalam waktu 4 detik.
-* **QR Code & Passport:** QR Code yang dihasilkan bersifat statis-dinamis yang mengarah pada URL publik terenkripsi (Format URL: `/passport/[slug]`).
-* **Responsif:** Tampilan UI bersifat *mobile-first* (berorientasi pada perangkat mobile/ponsel pintar) dengan skema navigasi *bottom nav* khusus pelajar dan *amber banner* untuk administrator.
+### 1.3 Batasan Produk (Product Scope)
+Mind Passport adalah ekosistem digital otonom berbasis kecerdasan buatan yang berfokus pada pemetaan, pelacakan, dan pemastian kesiapan kerja mahasiswa serta fresh graduates. Batasan ruang lingkup aplikasi meliputi:
+* **Autentikasi & Peran:** Sistem memproses autentikasi berbasis PostgreSQL dan enkripsi bcrypt tanpa ketergantungan database eksternal.
+* **Kecerdasan Buatan (AI Engine):** Pengolahan AI menggunakan Google Gemini API 1.5 dengan jaminan fallback 4 detik ke *static template engine* jika terjadi kendala jaringan API.
+* **Verifikasi QR Code:** QR Code yang dihasilkan berformat PNG base64 berkontras tinggi yang secara langsung mengarah pada tautan verifikasi paspor publik (`/passport/[slug]`).
+* **Desain Antarmuka:** Antarmuka dibangun dengan pendekatan *mobile-first* responsif, menyediakan *drawer sidebar* pada layar lebar dan *bottom navigation bar* pada perangkat genggam.
 
 ### 1.4 Definisi dan Istilah
-* **SKPL / SRS:** Spesifikasi Kebutuhan Perangkat Lunak / *Software Requirements Specification*.
-* **Career DNA:** Asesmen potensi diri yang mengukur 5 dimensi (Direction, Nature, Ability, Career Fit, Growth Potential).
-* **Skill Gap Analysis:** Komparasi matematis antara tingkat keahlian riil pengguna dengan standar minimum industri.
-* **Career Readiness Score (CRS):** Indeks angka kesiapan kerja (0-100) yang dihasilkan melalui perhitungan bobot kontribusi instrumen internal.
-* **Digital Competency Passport:** Dokumen digital terverifikasi dengan ID unik berformat `MP-YYYY-MM-XXXXXX` yang memuat rangkuman sertifikasi, keahlian, dan tautan publik yang dapat divalidasi via QR Code.
+* **SKPL / SRS:** Spesifikasi Kebutuhan Perangkat Lunak / *Software Requirements Specification* berdasarkan standar IEEE Std 830-1998.
+* **Career DNA:** Instrumen asesmen 5 dimensi (Direction, Nature, Ability, Career Fit, Growth Potential) untuk memetakan karakter dan potensi siswa.
+* **Skill Gap Index:** Kalkulasi matematis yang membandingkan nilai keahlian siswa saat ini dengan standar minimum target profesi industri.
+* **Career Readiness Score (CRS):** Indeks angka kesiapan kerja skala 0-100 yang dihitung dari bobot kombinasi 4 instrumen (DNA 20%, Gap 35%, Roadmap 25%, Progress 20%).
+* **Digital Competency Passport:** Dokumen paspor kompetensi digital ber-ID unik (Format: `MP-YYYY-MM-XXXXXX`) yang memuat bukti keahlian terverifikasi dan dapat di-scan QR Code.
 
 ### 1.5 Referensi
 1. IEEE Std 830-1998, *IEEE Recommended Practice for Software Requirements Specifications*.
-2. Dokumentasi Teknis Next.js 15 dan React 19 (React Server Components).
-3. Dokumentasi Prisma ORM untuk PostgreSQL.
-4. Panduan Integrasi Google Gemini AI Developer SDK.
+2. Next.js 15 App Router & React 19 Server Components Documentation (https://nextjs.org/docs).
+3. Prisma ORM & PostgreSQL Schema Architecture (https://www.prisma.io/docs).
+4. Google Gemini AI Developer SDK Integration Manual.
 
 ---
 
 ## 2. Deskripsi Keseluruhan
 
 ### 2.1 Deskripsi Produk
-**Mind Passport** adalah ekosistem digital otonom untuk membantu mahasiswa dan lulusan baru dalam memetakan, melacak, dan memvalidasi kesiapan karier mereka. 
+Mind Passport dirancang sebagai solusi atas permasalahan kesenjangan keahlian (*skill gap*) yang sering dialami oleh lulusan baru perguruan tinggi. Aplikasi web ini mengintegrasikan seluruh alur pengembangan diri secara otonom: dimulai dari pengisian kuesioner potensi (Career DNA), analisis kekurangan skill terhadap target industri (Skill Gap), penyusunan kurikulum belajar mandiri bertahap (Roadmap), pelacakan portofolio bukti fisik (Progress Tracker), kalkulasi skor kesiapan kerja terpadu (Readiness Score), bimbingan konsultasi AI (Navigator), hingga penerbitan Paspor Kompetensi Digital yang terverifikasi dan siap di-scan oleh pihak rekruter industri.
 
-Sistem ini memandu pengguna secara terstruktur mulai dari pendaftaran akun, pengisian asesmen kepribadian/minat (Career DNA), analisis gap terhadap target profesi industri, penyusunan kurikulum belajar mandiri (Roadmap), pelacakan progres fisik sertifikat (Progress Tracker), kalkulasi kesiapan kerja terpadu (Readiness Score), konsultasi AI (Navigator), hingga penerbitan paspor kompetensi digital ber-QR Code untuk kebutuhan rekrutmen industri.
-
-### 2.2 Fungsi Produk
-Fungsi utama yang disediakan oleh Mind Passport meliputi:
-1. **Sistem Autentikasi Peran:** Autentikasi aman untuk akun Siswa (User) dan Admin.
-2. **Career DNA Assessment:** Pengisian asesmen 5 dimensi dengan kalkulasi otomatis dan visualisasi diagram radar.
-3. **Analisis Kesenjangan (Skill Gap):** Perbandingan keahlian pengguna dengan parameter acuan standar industri.
-4. **Roadmap Pembelajaran Mandiri (Personalized Roadmap):** Penyusunan tahap belajar otonom, penghitungan waktu belajar (elapsed time), dan penambahan masa durasi target belajar (+7/+14 hari).
-5. **Pelacak Progres Pembelajaran (Progress Tracker):** Media pengunggahan bukti portofolio/sertifikat yang siap dinilai.
-6. **Skor Kesiapan Karier (CRS):** Penghitungan real-time indeks kesiapan kerja dari bobot DNA, Gap, Roadmap, dan Aktivitas.
-7. **Paspor Kompetensi Digital & QR Code:** Halaman publik paspor kompetensi siswa yang dilengkapi generator QR Code kontras tinggi.
-8. **Asisten Karier Otonom (AI Navigator):** Chatbot interaktif bertenaga LLM Gemini untuk rekomendasi dan bimbingan karier terintegrasi.
-9. **Verifikasi Progres (Admin):** Panel kendali admin untuk menyetujui/menolak bukti sertifikasi siswa secara instan.
-10. **Pengaturan Standar Kompetensi (Admin):** Panel admin untuk memperbarui nilai standar minimal tiap profesi industri.
+### 2.2 Fungsi Utama Produk
+Fungsi utama sistem terbagi dalam 8 modul siswa dan 3 modul kontrol administrator:
+1. **Autentikasi Peran:** Registrasi akun baru dan login multi-role (Siswa & Admin) berbasis enkripsi bcrypt.
+2. **Career DNA Assessment:** Kuesioner interaktif 5 dimensi dengan hasil visualisasi Diagram Radar 5D.
+3. **Skill Gap Analysis:** Komparasi skor siswa vs standar industri dengan visualisasi Diagram Batang.
+4. **Personalized Skill Roadmap:** Penyusunan modul belajar otonom, pelacakan waktu pengerjaan (*elapsed time*), dan tombol tambah durasi target (+7/+14 Hari).
+5. **Verified Progress Tracker:** Media pengunggahan bukti fisik (sertifikat, magang, proyek) dengan status awal Ditinjau.
+6. **Career Readiness Score:** Kalkulasi otomatis skor kesiapan kerja (0-100) dan grafik riwayat perkembangan mingguan.
+7. **Digital Competency Passport:** Dokumen resmi ber-ID unik yang dilengkapi generator QR Code kontras tinggi dan tombol cetak PDF.
+8. **AI Career Navigator:** Chatbot interaktif bertenaga LLM Gemini untuk konsultasi karier dan rekomendasi pelatihan.
+9. **Verifikasi Progres Admin:** Panel kendali admin untuk menyetujui/menolak berkas sertifikasi siswa secara 1-klik.
+10. **Manajemen Standar Industri:** Panel admin untuk merubah standar nilai minimum kompetensi profesi industri.
+11. **Audit Logs & Keamanan:** Panel audit untuk memantau riwayat log login dan mendeteksi aktivitas mencurigakan.
 
 ### 2.3 Penggolongan Karakteristik Pengguna
-Sistem membedakan pengguna ke dalam dua kategori peran (*role*):
 
-#### Tabel 1. Karakteristik Pengguna
-| Kategori Pengguna | Tugas Utama | Hak Akses Sistem | Kemampuan yang Harus Dimiliki |
+| Kategori Pengguna | Tugas Utama | Hak Akses Aplikasi | Kemampuan yang Dibutuhkan |
 | :--- | :--- | :--- | :--- |
-| **Siswa (User)** | Mengisi Career DNA, menganalisis gap keahlian, memantau roadmap, mengunggah bukti progres, melihat skor CRS, mengonsultasikan karier pada AI, dan membagikan tautan paspor digital. | Mengakses seluruh fitur beranda mahasiswa (`/dashboard`, `/career-dna`, `/skill-gap`, `/roadmap`, `/progress`, `/readiness-score`, `/passport`, `/navigator`, `/industry-match`). | Pengoperasian browser web dasar pada smartphone atau komputer desktop. |
-| **Administrator (Admin)** | Memverifikasi berkas portofolio siswa, mengelola standar kebutuhan keahlian industri, memantau daftar pengguna terdaftar, dan mengaudit riwayat log login. | Mengakses panel kontrol admin (`/admin/verify`, `/admin/standards`, `/admin/users`, `/admin/logs`). | Pengoperasian sistem manajemen data berbasis web. |
+| **Siswa (User)** | Mengisi Career DNA, menganalisis gap, mengelola roadmap & target waktu, mengupload portofolio, memantau skor CRS, konsultasi AI, dan membagikan QR Paspor. | Seluruh beranda mahasiswa (`/dashboard`, `/career-dna`, `/skill-gap`, `/roadmap`, `/progress`, `/readiness-score`, `/passport`, `/navigator`, `/industry-match`). | Pengoperasian web browser dasar di smartphone atau PC. |
+| **Administrator** | Memverifikasi berkas sertifikat siswa, mengelola standar nilai industri, mengelola akun pengguna, dan memantau audit log login. | Seluruh panel admin (`/admin/verify`, `/admin/standards`, `/admin/users`, `/admin/logs`). | Pengoperasian web browser & manajemen data. |
 
-### 2.4 Lingkungan Operasi
-Perangkat lunak Mind Passport beroperasi pada lingkungan berikut:
-* **Server Side:** Node.js v18.x ke atas, Next.js 15, Prisma ORM, dengan database PostgreSQL (Neon Database Serverless).
-* **Client Side:** Browser web modern yang mendukung JavaScript ES6 dan HTML5 (Google Chrome, Mozilla Firefox, Safari, Microsoft Edge, Opera).
-* **Sistem Operasi Host Server:** Linux (Ubuntu Server, Alpine Linux) atau platform Serverless Cloud (Vercel, AWS Amplify).
+### 2.4 Lingkungan Operasi (Operating Environment)
+* **Server-Side:** Node.js v18+, Next.js 15 App Router, Prisma ORM v7, PostgreSQL (Neon DB Serverless).
+* **Client-Side:** Browser web modern (Chrome 100+, Safari 15+, Firefox 100+, Edge) dengan dukungan JavaScript ES6+ dan HTML5 Canvas.
+* **Cloud Infrastructure:** Vercel Cloud Serverless Deployment.
 
 ### 2.5 Batasan Desain dan Implementasi
-* **Desain UI:** Harus responsif menggunakan Tailwind CSS dengan layout *mobile-first* (Drawer menu menyusut menjadi bottom navigation bar di layar ponsel).
-* **Manajemen Keadaan (State Management):** Menggunakan React hooks (`useState`, `useEffect`) dan Next.js server actions.
-* **Database Relasional:** Struktur database harus mematuhi skema relasi integritas referensial (Foreign Key, Cascade Delete).
+1. **Responsive Layout:** Antarmuka dibangun dengan Tailwind CSS menggunakan prinsip *mobile-first* (Drawer sidebar menyusut menjadi bottom nav di ponsel).
+2. **Optimistic State:** Setiap pembaruan status pengerjaan roadmap wajib diperbarui secara instan pada antarmuka client (*Optimistic UI*) sebelum server merespons.
+3. **Admin Safety Visual:** Antarmuka admin diposisikan dalam tema gelap (*Dark Amber*) dan dilengkapi banner penanda status admin aktif.
 
 ### 2.6 Dokumentasi Pengguna
-Paket perangkat lunak ini disertai dengan dokumentasi pengguna berupa:
-1. **Panduan Penggunaan Siswa (User Guide):** PDF tutorial interaktif pengisian data, pembacaan radar chart, dan penggunaan QR Code paspor.
-2. **Panduan Operasional Administrator (Admin Manual):** Panduan tata cara memverifikasi berkas, memperbarui standar profesi, dan memantau audit log.
-3. **Naskah Demo Resmi (`PRESENTATION_DEMO_SCRIPT.md`):** Naskah panduan skenario demo presentasi 10 menit.
+1. **Panduan Penggunaan Siswa (User Guide):** Tutorial langkah-langkah penggunaan dari pendaftaran hingga cetak PDF paspor digital.
+2. **Panduan Operasional Admin (Admin Manual):** Panduan pengoperasian verifikasi berkas, pembaruan standar, dan analisis log.
+3. **Naskah Demo Presentasi:** Naskah panduan pembacaan presentasi demo 10 menit (`PRESENTATION_DEMO_SCRIPT.md`).
 
 ---
 
 ## 3. Kebutuhan Antarmuka Eksternal
 
-### 3.1 User Interfaces
-Antarmuka pengguna didesain dengan visualisasi modern:
-* **Warna Utama (Siswa):** Indigo (#4F46E5), Sky Blue (#0EA5E9), dengan latar belakang netral/putih pada dashboard dan gradien gelap pada halaman autentikasi.
-* **Warna Utama (Admin):** Skema warna Amber/Kuning Gelap (#D97706) dikombinasikan dengan latar belakang gelap (*Dark Amber Theme*) dan spanduk penunjuk status mode admin aktif di bagian atas.
-* **Grafik Visual:** Menggunakan library Recharts untuk visualisasi diagram radar (5 dimensi DNA) dan diagram batang (Perbandingan skor gap).
-* **Navigasi Responsif:** Tombol navigasi melayang (*sticky bottom navigation*) di layar perangkat genggam agar mudah dijangkau oleh jempol pengguna.
+### 3.1 User Interfaces (Antarmuka Pengguna)
+Antarmuka pengguna dirancang modern dan intuitif. Tampilan mahasiswa mendominasi skema warna Indigo (#4F46E5) dan Sky Blue (#0EA5E9) dengan visualisasi grafik interaktif Recharts. Tampilan administrator dipisahkan secara tegas menggunakan skema warna Dark Amber (#D97706) dan banner penanda mode admin aktif.
 
-### 3.2 Hardware Interface
-Aplikasi dijalankan pada perangkat keras berikut:
-* **Sisi Server (Server-side Hosting):** Processor 1 vCPU, RAM 512 MB, Storage 1 GB (minimum spesifikasi cloud serverless / container base).
-* **Sisi Pengguna (Client-side Devices):**
-  * PC/Laptop dengan RAM minimal 2 GB dan resolusi layar minimal 1024x768.
-  * Smartphone dengan memori RAM minimal 1 GB dan layar touchscreen.
-  * Kamera smartphone (diperlukan bagi pihak ketiga untuk memindai QR Code kompetensi paspor fisik).
+### 3.2 Hardware Interfaces (Antarmuka Perangkat Keras)
+* **Server Hosting Specs:** vCPU 1 Core, RAM 512 MB, Disk Storage 1 GB.
+* **Client Device Specs:** Laptop/PC RAM 2 GB (Min. Screen 1024x768) atau Smartphone Touchscreen RAM 1 GB (Min. Screen 360px).
+* **Scanning Hardware:** Kamera HP beresolusi minimal 2 MP untuk pemindaian QR Code Paspor.
 
-### 3.3 Software Interface
-Sistem berinteraksi dengan komponen perangkat lunak eksternal berikut:
-* **Sistem Operasi Client:** Windows, Linux, macOS, Android, iOS.
-* **Prisma Client:** Sebagai antarmuka query database PostgreSQL.
-* **Google Gemini AI API:** Digunakan untuk memberikan analisis konsultasi karier otonom secara *real-time*.
-* **Next-Auth:** Untuk koordinasi sesi autentikasi pengguna melalui enkripsi cookie browser.
+### 3.3 Software Interfaces (Antarmuka Perangkat Lunak)
+* **Database Interface:** Prisma Client ORM untuk eksekusi query PostgreSQL.
+* **AI Service Interface:** Google Gemini AI SDK 1.5 untuk pengolahan rekomendasi kecerdasan buatan.
+* **Authentication Interface:** Next-Auth Session Manager untuk koordinasi cookie terenkripsi.
 
-### 3.4 Communication Interface
-* Protokol komunikasi data menggunakan **HTTPS** (wajib pada tahap produksi) untuk mengamankan data pengguna, sandi, dan transaksi dokumen paspor.
-* Antarmuka pertukaran data API menggunakan format **JSON** via arsitektur RESTful API (`/api/roadmap`, `/api/readiness-score`, `/api/passport/qrcode`).
+### 3.4 Communication Interfaces (Antarmuka Komunikasi & Kamus Data API)
+Komunikasi data antara client browser dan server menggunakan arsitektur RESTful API berformat JSON yang diamankan dengan protokol HTTPS. Berikut adalah kamus data (*Data Dictionary*) untuk endpoint API utama:
+
+| Endpoint API | Method | Request Payload (JSON) | Response Payload (JSON) |
+| :--- | :--- | :--- | :--- |
+| `/api/roadmap` | POST | `{"skillGapAnalysisId": "clx..."}` | `{"success": true, "data": {"id": "...", "title": "...", "items": [...]}}` |
+| `/api/roadmap/[id]` | PATCH | `{"action": "start", "extendDays": 7}` | `{"success": true, "data": {"startedAt": "...", "extendedDays": 7}}` |
+| `/api/roadmap/item/[id]` | PATCH | `{"status": "done"}` | `{"success": true, "data": {"id": "...", "status": "done"}}` |
+| `/api/readiness-score/latest` | GET | None (Session Cookie) | `{"success": true, "data": {"score": 85, "category": "Sangat Siap"}}` |
+| `/api/passport/qrcode` | GET | None (Session Cookie) | `{"success": true, "qrCodeUrl": "data:image/png;base64,..."}` |
 
 ---
 
 ## 4. Kebutuhan Fungsional (Functional Requirements)
 
-#### Tabel 2. Kebutuhan Fungsional Perangkat Lunak
-| ID | Kebutuhan Fungsional | Penjelasan Deskripsi |
+### 4.1 Daftar Kebutuhan Fungsional
+
+| ID | Fitur Fungsional | Deskripsi Detail Spesifikasi |
 | :--- | :--- | :--- |
-| **FR-01** | Pendaftaran dan Autentikasi Pengguna | Sistem memfasilitasi registrasi siswa baru dan login multi-peran (Siswa/Admin) dengan aman. |
-| **FR-02** | Pengisian Career DNA Assessment | Sistem menyajikan kuesioner 5 dimensi dan menampilkan radar chart hasil analisis potensi siswa. |
-| **FR-03** | Analisis Kesenjangan Keahlian (Skill Gap) | Sistem menghitung selisih keahlian siswa dengan target industri dan menyajikan bar chart perbandingan. |
-| **FR-04** | Pembuatan & Pengelolaan Roadmap Belajar | Sistem menyusun langkah belajar otonom, mengaktifkan pengerjaan, menghitung elapsed time, dan melayani penambahan durasi (+7/+14 Hari). |
-| **FR-05** | Pengunggahan Bukti Progres Pembelajaran | Siswa mengunggah sertifikat/proyek ke sistem tracker dengan status awal ditinjau (pending). |
-| **FR-06** | Rekalibrasi Skor Kesiapan (Readiness Score) | Sistem menghitung Career Readiness Score secara otonom (0-100) setiap kali ada data perkembangan baru yang disetujui. |
-| **FR-07** | Penerbitan Paspor Digital & QR Code | Sistem mencetak paspor digital ber-ID unik lengkap dengan QR Code kontras tinggi yang dapat di-scan publik. |
-| **FR-08** | Konsultasi AI Karier (Navigator) | Sistem menyediakan ruang chat interaktif berbasis LLM Gemini untuk konsultasi karier terpandu. |
-| **FR-09** | Panel Kendali Verifikasi (Admin) | Admin dapat menyetujui atau menolak bukti sertifikat siswa yang berstatus ditinjau secara instan. |
-| **FR-10** | Konfigurasi Standar Kompetensi (Admin) | Admin dapat merubah skor target minimal tiap profesi industri di database. |
-| **FR-11** | Audit Log Keamanan (Admin) | Admin dapat melihat riwayat log masuk sistem dan memantau status aktivitas keamanan. |
+| **FR-01** | Pendaftaran Akun | Sistem memfasilitasi pendaftaran akun siswa baru dengan validasi email unik dan sandi terenkripsi bcrypt. |
+| **FR-02** | Autentikasi Sesi | Sistem memverifikasi autentikasi masuk pengguna dan mengarahkan ke dashboard berdasarkan peran (Siswa/Admin). |
+| **FR-03** | Career DNA Assessment | Sistem menyajikan kuesioner 5 dimensi dan menghitung skor potensi diri serta merekomendasikan target profesi. |
+| **FR-04** | Visualisasi Radar Chart | Sistem menampilkan grafik radar 5 dimensi (Direction, Nature, Ability, Career Fit, Growth Potential) menggunakan Recharts. |
+| **FR-05** | Skill Gap Analysis | Sistem membandingkan nilai keahlian siswa dengan standar minimum target industri dan mengelompokkan prioritas gap. |
+| **FR-06** | Visualisasi Diagram Batang | Sistem menampilkan diagram batang perbandingan skor keahlian siswa melawan standar industri. |
+| **FR-07** | Penyusunan Skill Roadmap | Sistem secara otonom menyusun modul belajar bertahap berdasarkan prioritas gap terbesar. |
+| **FR-08** | Mulai Roadmap & Timing | Sistem menyediakan tombol '▶️ Mulai Roadmap' yang mencatat timestamp startedAt dan menghitung durasi pengerjaan berjalan (elapsed time). |
+| **FR-09** | Perpanjangan Waktu Target | Sistem menyediakan tombol perpanjangan waktu '+7 Hari' dan '+14 Hari' yang memperbarui extendedDays dan tanggal target selesai. |
+| **FR-10** | Progress Tracker | Siswa dapat mengunggah portofolio/sertifikat fisik dengan status awal 'Ditinjau'. |
+| **FR-11** | Kalkulasi Readiness Score | Sistem merekalibrasi skor kesiapan kerja (0-100) secara otomatis setiap kali progres disetujui atau roadmap diselesaikan. |
+| **FR-12** | Penerbitan Paspor Digital | Sistem menerbitkan paspor digital ber-ID unik berformat MP-YYYY-MM-XXXXXX. |
+| **FR-13** | Generator QR Code | Sistem menghasilkan QR Code kontras tinggi (300px Base64 PNG) yang mengarah pada URL publik terverifikasi. |
+| **FR-14** | AI Career Navigator | Sistem menyediakan chatbot konsultasi karier interaktif berbasis LLM Gemini. |
+| **FR-15** | Panel Verifikasi Admin | Admin dapat menyetujui (1-klik) atau menolak bukti portofolio siswa. |
+| **FR-16** | Manajemen Standar Industri | Admin dapat memperbarui skor standar minimum dan bobot kompetensi profesi industri. |
+| **FR-17** | Audit Log Keamanan | Admin dapat memantau riwayat log masuk sistem dan statistik aktivitas pengusung sesi. |
 
----
+### 4.2 Use Case Diagram
 
-### 4.1 Use Case Diagram
+![Diagram Use Case Mind Passport](images/usecase_diagram.png)
+*Gambar 4.1 Diagram Use Case Mind Passport*
 
-Diagram Use Case menggambarkan interaksi antara Aktor (Siswa dan Admin) dengan fungsi-fungsi utama dalam sistem Mind Passport.
+### 4.3 Spesifikasi Use Case Kritis (Stimulus & Respon)
 
-```mermaid
-usecaseDiagram
-    actor Siswa as "Siswa (User)"
-    actor Admin as "Administrator"
+#### 4.3.1 Use Case UC-04: Mengelola Skill Roadmap & Timing
+* **Deskripsi:** Siswa mengaktifkan pengerjaan roadmap, melacak durasi belajar berjalan, memperpanjang durasi target, dan memperbarui status pengerjaan modul.
+* **Pre-condition:** Siswa telah memiliki roadmap aktif hasil analisis Skill Gap.
+* **Post-condition:** Status roadmap dan Career Readiness Score terbarui secara real-time.
 
-    Siswa --> (Registrasi & Login)
-    Siswa --> (Mengisi Career DNA Assessment)
-    Siswa --> (Melakukan Skill Gap Analysis)
-    Siswa --> (Mengelola Skill Roadmap & Tambah Waktu)
-    Siswa --> (Mengunggah Bukti Progress Tracker)
-    Siswa --> (Melihat Career Readiness Score)
-    Siswa --> (Mengakses Paspor Digital & QR Code)
-    Siswa --> (Konsultasi via AI Career Navigator)
-
-    Admin --> (Registrasi & Login)
-    Admin --> (Memverifikasi Bukti Progres Siswa)
-    Admin --> (Mengelola Standar Kompetensi Industri)
-    Admin --> (Mengelola Pengguna & Audit Logs)
-```
-
----
-
-### 4.2 Deskripsi Use Case (Stimulus & Respon)
-
-Berikut adalah detail interaksi masukan (stimulus) dari aktor dan tanggapan (respon) dari sistem untuk use case kritis:
-
-#### 4.2.1 Use Case: Mengelola Skill Roadmap & Tambah Waktu
-* **ID Use Case:** UC-04
-* **Aktor Utama:** Siswa (User)
-* **Deskripsi:** Siswa mengaktifkan roadmap belajarnya, melacak lama waktu belajar berjalan, dan meminta perpanjangan durasi target penyelesaian.
-* **Stimulus dan Respon:**
-
-| Aktor (User) | Respon Sistem |
+| Stimulus (Aksi Siswa) | Respon Sistem |
 | :--- | :--- |
-| 1. Memilih menu 'Roadmap' di sidebar navigasi. | 2. Memuat data roadmap yang aktif milik pengguna dari database PostgreSQL. |
-| 3. Menekan tombol **'▶️ Mulai Roadmap'** jika belum dimulai. | 4. Menyimpan waktu *startedAt* ke database, menghitung durasi pengerjaan berjalan (*elapsed time*), dan memperbarui tampilan kartu secara dinamis. |
-| 5. Menekan tombol **'➕ +7 Hari'** atau **'+14 Hari'** untuk memperpanjang target waktu selesai. | 6. Menghitung akumulasi tanggal target baru, memperbarui *extendedDays* di database, dan memuat ulang info tanggal target selesai tanpa memuat ulang browser (*SPA transition*). |
-| 7. Mengklik checkbox salah satu langkah pembelajaran untuk diubah statusnya menjadi **'Selesai (Done)'**. | 8. Memperbarui status item menjadi *done*, merekalibrasi ulang *Career Readiness Score* pengguna, dan memicu pembaruan widget CRS di sidebar secara dinamis. |
+| 1. Siswa memilih menu 'Roadmap' di sidebar navigasi. | 2. Memuat data roadmap aktif milik pengguna dari database PostgreSQL. |
+| 3. Menekan tombol '▶️ Mulai Roadmap' jika belum dimulai. | 4. Menyimpan timestamp startedAt ke database, menghitung elapsed time, dan memperbarui kartu. |
+| 5. Menekan tombol '➕ +7 Hari' atau '+14 Hari'. | 6. Menghitung tanggal target baru, memperbarui extendedDays, dan menampilkan tanggal target selesai baru. |
+| 7. Mengklik status modul dari 'Belum' menjadi 'Selesai (Done)'. | 8. Memperbarui status modul menjadi done, merekalibrasi skor CRS, dan memperbarui widget CRS di sidebar. |
 
-#### 4.2.2 Use Case: Memverifikasi Bukti Progres Siswa
-* **ID Use Case:** UC-09
-* **Aktor Utama:** Administrator
-* **Deskripsi:** Admin meninjau data bukti fisik sertifikasi siswa dan mengubah statusnya dari ditinjau menjadi disetujui (verifikasi).
-* **Stimulus dan Respon:**
+#### 4.3.2 Use Case UC-09: Verifikasi Progres Siswa (Admin)
+* **Deskripsi:** Administrator meninjau dan menyetujui bukti portofolio / sertifikat yang diunggah oleh siswa.
+* **Pre-condition:** Terdapat pengajuan berkas portofolio siswa berstatus Ditinjau.
+* **Post-condition:** Status portofolio berubah menjadi Disetujui dan skor CRS siswa naik 20%.
 
-| Aktor (Admin) | Respon Sistem |
+| Stimulus (Aksi Admin) | Respon Sistem |
 | :--- | :--- |
-| 1. Memilih menu 'Verifikasi' di panel admin. | 2. Memuat daftar bukti aktivitas siswa yang berstatus '⏳ Ditinjau' (Pending) dari database. |
-| 3. Menekan tombol **'✓ Verifikasi'** pada baris data siswa pilihan. | 4. Mengubah status *ProgressEntry* menjadi 'disetujui' (verified). |
-| | 5. Memicu fungsi `updateReadinessScore(userId)` untuk menghitung ulang nilai CRS milik siswa tersebut dengan memasukkan bobot tambahan 20% dari aktivitas terverifikasi. |
-| | 6. Memperbarui daftar verifikasi di antarmuka admin dan memindahkan entri ke kelompok data terverifikasi. |
+| 1. Admin memilih menu 'Verifikasi' di panel admin. | 2. Memuat daftar berkas siswa berstatus '⏳ Ditinjau'. |
+| 3. Menekan tombol '✓ Verifikasi' pada entri siswa pilihan. | 4. Mengubah status berkas menjadi 'verified' di database. |
+| | 5. Memicu fungsi updateReadinessScore(userId) untuk menaikkan skor CRS siswa sebesar 20%. |
+| | 6. Memindahkan entri ke kelompok data terverifikasi. |
 
-#### 4.2.3 Use Case: Melakukan Skill Gap Analysis
-* **ID Use Case:** UC-03
-* **Aktor Utama:** Siswa (User)
-* **Deskripsi:** Siswa membandingkan tingkat kemampuannya dengan kebutuhan nyata standar industri.
-* **Stimulus dan Respon:**
+### 4.4 Sequence Diagram
 
-| Aktor (User) | Respon Sistem |
-| :--- | :--- |
-| 1. Memilih menu 'Skill Gap' di navigasi. | 2. Menampilkan pilihan target karier (Default: profesi hasil rekomendasi Career DNA). |
-| 3. Memilih target profesi dan menekan **'Mulai Analisis Gap'**. | 4. Menampilkan formulir asesmen mandiri untuk daftar keahlian wajib pada profesi tersebut. |
-| 5. Mengisi tingkat keahlian saat ini (Skala 1-5) dan menekan **'Hitung Gap'**. | 6. Melakukan kalkulasi selisih skor, menyimpan hasil analisis ke database, menampilkan diagram batang perbandingan, dan memicu tombol buat roadmap. |
+![Sequence Diagram Pembaruan Roadmap](images/sequence_diagram.png)
+*Gambar 4.2 Sequence Diagram Pembaruan Roadmap & Rekalibrasi Readiness Score*
 
----
+### 4.5 Class Diagram & ERD Basis Data
 
-### 4.3 Class Diagram
-
-Arsitektur database relasional Mind Passport direpresentasikan dalam bentuk Class Diagram (Entity Relationship) berikut:
-
-```mermaid
-classDiagram
-    class User {
-        +String id
-        +String name
-        +String email
-        +String password
-        +String role
-        +String institution
-        +DateTime createdAt
-    }
-
-    class CareerDNA {
-        +String id
-        +String userId
-        +Int scoreDirection
-        +Int scoreNature
-        +Int scoreAbility
-        +Int scoreCareerFit
-        +Int scoreGrowth
-        +DateTime createdAt
-    }
-
-    class SkillGapAnalysis {
-        +String id
-        +String userId
-        +String careerRoleId
-        +Int overallReadinessPercent
-        +Int totalGapPoints
-        +Json gapDetails
-        +DateTime createdAt
-    }
-
-    class SkillRoadmap {
-        +String id
-        +String userId
-        +String careerRoleId
-        +String title
-        +String status
-        +DateTime startedAt
-        +Int targetDays
-        +Int extendedDays
-        +DateTime createdAt
-    }
-
-    class RoadmapItem {
-        +String id
-        +String roadmapId
-        +String skillId
-        +Int stageNumber
-        +String title
-        +String description
-        +String recommendedActivity
-        +String priority
-        +String status
-        +DateTime completedAt
-    }
-
-    class ProgressEntry {
-        +String id
-        +String userId
-        +String title
-        +String category
-        +String description
-        +String verified
-        +DateTime createdAt
-    }
-
-    class ReadinessScoreHistory {
-        +String id
-        +String userId
-        +Float finalScore
-        +String category
-        +DateTime calculatedAt
-    }
-
-    class CareerRole {
-        +String id
-        +String title
-        +String category
-        +String description
-    }
-
-    User "1" -- "0..1" CareerDNA : memiliki
-    User "1" -- "0..*" SkillGapAnalysis : melakukan
-    User "1" -- "0..*" SkillRoadmap : menggarap
-    User "1" -- "0..*" ProgressEntry : mengunggah
-    User "1" -- "0..*" ReadinessScoreHistory : mencatat
-    SkillRoadmap "1" -- "1..*" RoadmapItem : terdiri_dari
-    SkillGapAnalysis "0..*" -- "1" CareerRole : menganalisis_target
-    SkillRoadmap "0..*" -- "1" CareerRole : menargetkan_karier
-```
+![Class Diagram & ERD Mind Passport](images/class_diagram.png)
+*Gambar 4.3 Diagram Kelas & Relasi Database Mind Passport*
 
 ---
 
 ## 5. Kebutuhan Non-Fungsional (Non-Functional Requirements)
 
-Kebutuhan non-fungsional mendefinisikan batasan operasional, performa, dan keamanan dari sistem Mind Passport.
+### 5.1 Parameter Kebutuhan Non-Fungsional
 
-#### Tabel 3. Kebutuhan Non-Fungsional Perangkat Lunak
-| ID | Parameter | Deskripsi Spesifikasi Kebutuhan |
+| ID | Parameter | Spesifikasi Detail Kebutuhan & Target Ukur |
 | :--- | :--- | :--- |
-| **NFR-01** | **Availability** | Sistem harus dapat diakses selama 24 jam sehari, 7 hari seminggu dengan target *uptime* minimal **99.9%**, kecuali selama jendela pemeliharaan resmi yang dijadwalkan di luar jam kerja aktif mahasiswa (Pukul 02:00 - 04:00 WIB). |
-| **NFR-02** | **Reliability** | *AI Generator Fallback:* Jika koneksi API Gemini terputus atau mengalami kegagalan respons lebih dari **4 detik**, sistem harus otomatis mengalihkan proses pembuatan roadmap ke algoritma bawaan lokal server (*static template engine*) agar sistem tidak *crash* atau menampilkan halaman kosong. |
-| **NFR-03** | **Ergonomy** | 1. Tampilan antarmuka harus responsif penuh (*fluid grid*), nyaman dibaca di layar berukuran 360px (mobile) hingga 1920px (monitor desktop).<br>2. Navigasi administrator dipisahkan secara visual menggunakan skema tema gelap (*Dark Amber*) dan banner penanda khusus untuk mencegah kesalahan operasional verifikasi data. |
-| **NFR-04** | **Portability** | Sistem dapat diakses secara konsisten tanpa degradasi visual atau kegagalan fungsi di seluruh browser utama (Google Chrome, Firefox, Safari, Microsoft Edge) baik di platform sistem operasi desktop maupun mobile (Android/iOS). |
-| **NFR-05** | **Memory & Storage** | Skema database dirancang modular dengan relasi terindeks untuk menjaga ukuran penyimpanan di bawah 100 MB untuk setiap 10.000 data pengguna aktif. |
-| **NFR-06** | **Response Time** | 1. Setiap permintaan data static (landing page, dashboard) harus dimuat dalam waktu kurang dari **1.5 detik**.<br>2. Transisi status langkah roadmap dan pembaruan CRS wajib diselesaikan dalam waktu kurang dari **800 milidetik** pada antarmuka *client-side* (*Optimistic UI Update*). |
-| **NFR-07** | **Safety** | Sistem tidak mengontrol perangkat fisik berbahaya, sehingga parameter keselamatan manusia dikategorikan sebagai *Not Applicable (N/A)*. |
-| **NFR-08** | **Security** | 1. Enkripsi Kata Sandi: Sandi akun wajib dienkripsi satu arah menggunakan algoritma **bcrypt** dengan faktor kekuatan minimal 10.<br>2. Keamanan Sesi: Autentikasi sesi disimpan dalam *HTTP-only secure cookies* untuk mencegah serangan *Cross-Site Scripting (XSS)* dan *Session Hijacking*.<br>3. QR Code Verifikasi: URL tujuan pemindaian paspor harus diamankan menggunakan protokol **HTTPS** berkontras tinggi agar tidak mudah dipalsukan. |
-| **NFR-09** | **Language** | Seluruh petunjuk, label tombol, panduan kuesioner, hasil analisis kesiapan, dan dokumentasi naskah harus disajikan menggunakan **Bahasa Indonesia** yang baik dan benar. |
+| **NFR-01** | Availability | Sistem harus dapat diakses 24/7 dengan jaminan target uptime minimal 99.9%. |
+| **NFR-02** | Reliability | Fallback Mechanism: Jika API Gemini timeout > 4 detik, sistem otomatis beralih menggunakan static template engine. |
+| **NFR-03** | Ergonomy | Antarmuka responsif penuh (360px - 1920px). Panel admin dibedakan visual dengan skema tema gelap Dark Amber. |
+| **NFR-04** | Portability | Dapat diakses secara konsisten di Chrome, Safari, Firefox, Edge pada OS Windows, macOS, Linux, Android, iOS. |
+| **NFR-05** | Memory & Storage | Skema database terurut dan terindeks untuk menjaga penggunaan penyimpanan di bawah 100 MB per 10.000 data pengguna. |
+| **NFR-06** | Response Time | Pemuatan halaman statis < 1.5 detik. Transisi status roadmap & rekalibrasi CRS di UI client < 800 milidetik. |
+| **NFR-07** | Safety | Not Applicable (N/A) karena aplikasi tidak mengontrol fisik mesin atau perangkat berbahaya. |
+| **NFR-08** | Security - Passwords | Sandi akun dienkripsi satu arah menggunakan algoritma bcrypt dengan salt factor 10. |
+| **NFR-09** | Security - Sessions | Sesi login disimpan dalam secure HTTP-only cookies untuk mencegah ancaman XSS dan Session Hijacking. |
+| **NFR-10** | Security - QR Code | URL pemindaian paspor publik diamankan menggunakan protokol HTTPS berkontras tinggi. |
+| **NFR-11** | Language | Seluruh antarmuka, kuesioner, analisis, dan dokumentasi disajikan dalam Bahasa Indonesia yang formal. |
+
+---
+
+### 5.2 Lembar Pengesahan Dokumen
+
+Dokumen SKPL ini telah diperiksa, disetujui, dan disahkan oleh pihak pengembang.
+
+**Tim Pengembang Mind Passport**  
+*Tanggal Pengesahan: 22 Juli 2026*
