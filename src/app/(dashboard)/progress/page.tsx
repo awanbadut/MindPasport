@@ -22,6 +22,27 @@ interface ProgressEntry {
   createdAt: string;
 }
 
+const DEFAULT_SKILLS: Skill[] = [
+  { id: "cmle3193e00003b6t12345678", name: "Microsoft Excel", category: "Hard Skill" },
+  { id: "cmle3193e00013b6t12345678", name: "Manajemen SDM & Rekrutmen", category: "Hard Skill" },
+  { id: "cmle3193e00023b6t12345678", name: "Laporan Keuangan & Akuntansi", category: "Hard Skill" },
+  { id: "cmle3193e00033b6t12345678", name: "Communication Skill", category: "Soft Skill" },
+  { id: "cmle3193e00043b6t12345678", name: "Copywriting & Storytelling", category: "Hard Skill" },
+  { id: "cmle3193e00053b6t12345678", name: "Negosiasi Bisnis & B2B Sales", category: "Hard Skill" },
+  { id: "cmle3193e00063b6t12345678", name: "Efisiensi Operasional", category: "Hard Skill" },
+  { id: "cmle3193e00073b6t12345678", name: "Public Relations & Media Relations", category: "Hard Skill" },
+  { id: "cmle3193e00083b6t12345678", name: "Supply Chain & Logistik", category: "Hard Skill" },
+  { id: "cmle3193e00093b6t12345678", name: "Perpajakan & Brevet", category: "Hard Skill" },
+  { id: "cmle3193e00103b6t12345678", name: "Python", category: "Hard Skill" },
+  { id: "cmle3193e00113b6t12345678", name: "SQL", category: "Hard Skill" },
+  { id: "cmle3193e00123b6t12345678", name: "Figma", category: "Tools & Technical Competencies" },
+  { id: "cmle3193e00133b6t12345678", name: "Problem Solving", category: "Soft Skill" },
+  { id: "cmle3193e00143b6t12345678", name: "Leadership", category: "Soft Skill" },
+  { id: "cmle3193e00153b6t12345678", name: "Critical Thinking", category: "Soft Skill" },
+  { id: "cmle3193e00163b6t12345678", name: "Canva & Visual Design", category: "Tools & Technical Competencies" },
+  { id: "cmle3193e00173b6t12345678", name: "SAP / Accurate System", category: "Tools & Technical Competencies" },
+];
+
 export default function ProgressTrackerPage() {
   const [entries, setEntries] = useState<ProgressEntry[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -43,6 +64,18 @@ export default function ProgressTrackerPage() {
     relatedSkillIds: [] as string[],
   });
   const [submitting, setSubmitting] = useState(false);
+  const [skillSearch, setSkillSearch] = useState("");
+
+  const toggleSkill = (skillId: string) => {
+    setFormData(prev => {
+      const exists = prev.relatedSkillIds.includes(skillId);
+      if (exists) {
+        return { ...prev, relatedSkillIds: prev.relatedSkillIds.filter(id => id !== skillId) };
+      } else {
+        return { ...prev, relatedSkillIds: [...prev.relatedSkillIds, skillId] };
+      }
+    });
+  };
 
   // Fetch entries & master skills
   const fetchEntries = async () => {
@@ -60,9 +93,9 @@ export default function ProgressTrackerPage() {
 
   const fetchSkills = async () => {
     try {
-      const res = await fetch("/api/admin/skills");
+      const res = await fetch("/api/skills");
       const json = await res.json();
-      if (json.success) {
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
         setSkills(json.data);
       }
     } catch {
@@ -74,6 +107,12 @@ export default function ProgressTrackerPage() {
     setLoading(true);
     Promise.all([fetchEntries(), fetchSkills()]).finally(() => setLoading(false));
   }, [filterType]);
+
+  useEffect(() => {
+    if (showModal) {
+      fetchSkills();
+    }
+  }, [showModal]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -430,22 +469,72 @@ export default function ProgressTrackerPage() {
               </div>
 
               <div>
-                <label htmlFor="relatedSkillIds" className="block text-xs font-semibold text-neutral-600 mb-1">
-                  Skill Terkait <span className="text-neutral-400">(Tahan Ctrl/Cmd untuk pilih beberapa)</span>
+                <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                  Skill Terkait <span className="text-neutral-400 font-normal">(Klik skill untuk memilih/menghapus)</span>
                 </label>
-                <select
-                  id="relatedSkillIds"
-                  multiple
-                  value={formData.relatedSkillIds}
-                  onChange={handleSkillSelectChange}
-                  className="w-full border border-neutral-200 rounded-xl px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-28"
-                >
-                  {skills.map(s => (
-                    <option key={s.id} value={s.id}>
-                      [{s.category}] {s.name}
-                    </option>
-                  ))}
-                </select>
+
+                {/* Selected Skills Chips */}
+                {(() => {
+                  const displaySkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
+                  return (
+                    <>
+                      {formData.relatedSkillIds.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-2.5 p-2 bg-indigo-50/60 border border-indigo-100 rounded-xl">
+                          {formData.relatedSkillIds.map(id => {
+                            const s = displaySkills.find(sk => sk.id === id);
+                            return (
+                              <span
+                                key={id}
+                                onClick={() => toggleSkill(id)}
+                                className="inline-flex items-center gap-1 text-xs bg-indigo-600 text-white font-medium px-2.5 py-1 rounded-lg cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm"
+                                title="Klik untuk menghapus"
+                              >
+                                #{s?.name || id}
+                                <span className="text-indigo-200 hover:text-white font-bold ml-1 text-sm">&times;</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Search input */}
+                      <input
+                        type="text"
+                        placeholder="🔍 Cari skill (misal: Excel, SDM, Communication)..."
+                        value={skillSearch}
+                        onChange={e => setSkillSearch(e.target.value)}
+                        className="w-full border border-neutral-200 rounded-xl px-3 py-1.5 text-xs text-neutral-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 mb-2"
+                      />
+
+                      {/* Skill List Pills */}
+                      <div className="max-h-36 overflow-y-auto border border-neutral-200 rounded-xl p-2.5 flex flex-wrap gap-1.5 bg-neutral-50/50">
+                        {displaySkills
+                          .filter(s => s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.category.toLowerCase().includes(skillSearch.toLowerCase()))
+                          .map(s => {
+                            const isSelected = formData.relatedSkillIds.includes(s.id);
+                            return (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => toggleSkill(s.id)}
+                                className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${
+                                  isSelected
+                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                    : "bg-white text-neutral-700 border-neutral-200 hover:border-indigo-300 hover:bg-indigo-50/50"
+                                }`}
+                              >
+                                {isSelected ? "✓ " : "+ "}
+                                {s.name}
+                              </button>
+                            );
+                          })}
+                        {displaySkills.filter(s => s.name.toLowerCase().includes(skillSearch.toLowerCase()) || s.category.toLowerCase().includes(skillSearch.toLowerCase())).length === 0 && (
+                          <p className="text-xs text-neutral-400 p-1">Skill tidak ditemukan.</p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-neutral-100">

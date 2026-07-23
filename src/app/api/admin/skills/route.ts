@@ -21,12 +21,6 @@ export async function GET() {
         { status: 401 }
       );
     }
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, error: { code: "FORBIDDEN", message: "Hanya admin yang bisa mengakses ini" } },
-        { status: 403 }
-      );
-    }
 
     const skills = await prisma.skill.findMany({
       orderBy: [{ category: "asc" }, { name: "asc" }],
